@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 
 import '../analyzer.dart';
@@ -67,7 +68,10 @@ class _CheckScreenState extends State<CheckScreen> {
       await _persist();
     } catch (e) {
       if (!mounted) return;
-      final msg = e.toString();
+      // Show a short reason, not the whole Android stack trace.
+      var msg = e is PlatformException ? (e.message ?? e.code) : e.toString();
+      msg = msg.split('\n').first;
+      if (msg.length > 160) msg = '${msg.substring(0, 160)}…';
       if (!msg.toLowerCase().contains('cancel')) {
         _snack('The scanner could not start. You can use "Add a file" instead.\n($msg)');
       }

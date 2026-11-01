@@ -34,6 +34,12 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // Code shrinking (R8) breaks Google's ML Kit document scanner: the
+            // scanner fails to start with a NullPointerException inside
+            // GmsDocumentScanning.getClient. Keep shrinking off until we have
+            // keep rules that are proven on a device.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
