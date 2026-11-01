@@ -151,10 +151,72 @@ Future<File> buildReportPdf(CheckCase c, Directory outDir) async {
         h('Looks usual'),
         ..._list(r['green']).map((e) => item(e as Map, _green, _greenBg)),
       ],
+      if (_list(r['standard_terms_changes']).isNotEmpty) ...[
+        h('Changes to the standard terms'),
+        pw.TableHelper.fromTextArray(
+          headers: ['Clause', 'Standard form says', 'This agreement says', 'Effect'],
+          data: _list(r['standard_terms_changes']).map((e) {
+            final m = e as Map;
+            final status = _s(m['status']);
+            return [
+              [_s(m['clause']), status].where((x) => x.isNotEmpty).join('\n'),
+              _s(m['prescribed']),
+              _s(m['document_says']),
+              _s(m['effect']),
+            ];
+          }).toList(),
+          headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
+          cellStyle: const pw.TextStyle(fontSize: 9),
+          headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFEEF0FB)),
+          border: pw.TableBorder.all(color: _line, width: .5),
+          columnWidths: {
+            0: const pw.FlexColumnWidth(1.2),
+            1: const pw.FlexColumnWidth(2.5),
+            2: const pw.FlexColumnWidth(2.5),
+            3: const pw.FlexColumnWidth(2.5),
+          },
+        ),
+      ],
+      if (_list(r['tick_boxes']).isNotEmpty) ...[
+        h('Tick-boxes'),
+        pw.TableHelper.fromTextArray(
+          headers: ['Where', 'Box group', 'Marked', 'Check'],
+          data: _list(r['tick_boxes']).map((e) {
+            final m = e as Map;
+            final status = _s(m['status']);
+            return [
+              [_s(m['document']), _s(m['page']).isEmpty ? '' : 'p ${_s(m['page'])}']
+                  .where((x) => x.isNotEmpty)
+                  .join(', '),
+              _s(m['group']),
+              _s(m['ticked']).isEmpty ? 'nothing' : _s(m['ticked']),
+              status == 'ok' ? 'OK' : [status, _s(m['issue'])].where((x) => x.isNotEmpty).join(': '),
+            ];
+          }).toList(),
+          headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
+          cellStyle: const pw.TextStyle(fontSize: 9),
+          headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFEEF0FB)),
+          border: pw.TableBorder.all(color: _line, width: .5),
+          columnWidths: {
+            0: const pw.FlexColumnWidth(1.5),
+            1: const pw.FlexColumnWidth(2.5),
+            2: const pw.FlexColumnWidth(2),
+            3: const pw.FlexColumnWidth(3),
+          },
+        ),
+      ],
       if (_list(r['blanks']).isNotEmpty) ...[
         h('Blank or incomplete'),
-        ..._list(r['blanks']).map((e) => pw.Bullet(
-            text: '${_s((e as Map)['field'])} — ${_s(e['document'])}', style: const pw.TextStyle(fontSize: 10))),
+        ..._list(r['blanks']).map((e) {
+          final m = e as Map;
+          final where = [_s(m['document']), _s(m['page']).isEmpty ? '' : 'p ${_s(m['page'])}']
+              .where((x) => x.isNotEmpty)
+              .join(', ');
+          final why = _s(m['why']);
+          return pw.Bullet(
+              text: '${_s(m['field'])} — $where${why.isEmpty ? '' : '. $why'}',
+              style: const pw.TextStyle(fontSize: 10));
+        }),
       ],
       if (_list(r['questions']).isNotEmpty) ...[
         h('Questions to ask the operator'),

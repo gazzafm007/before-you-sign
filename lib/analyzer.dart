@@ -112,9 +112,17 @@ class Analyzer {
 
     final body = jsonEncode({
       'model': s.model,
-      'max_tokens': 16000,
+      'max_tokens': 32000,
       'stream': true,
-      'system': kSystemPrompt,
+      // The instructions and the standard form are the same for every check,
+      // so they are cached to cut the cost of repeat checks.
+      'system': [
+        {
+          'type': 'text',
+          'text': kSystemPrompt,
+          'cache_control': {'type': 'ephemeral'},
+        }
+      ],
       'messages': [
         {'role': 'user', 'content': content}
       ],
@@ -182,7 +190,9 @@ class Analyzer {
       _client = null;
     }
 
-    return parseReport(text.toString());
+    final report = parseReport(text.toString());
+    report['_prompt_version'] = kPromptVersion;
+    return report;
   }
 
   static Map<String, dynamic> parseReport(String raw) {

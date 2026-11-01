@@ -173,13 +173,73 @@ class _ReportScreenState extends State<ReportScreen> {
           _items('Look closely before you sign', Icons.warning_amber_rounded, r['red'], kRed, kRedBg, true),
           _items('Ask about', Icons.help_outline, r['amber'], kAmber, kAmberBg, true),
           _items('Looks usual', Icons.check_circle_outline, r['green'], kGreen, kGreenBg, false),
+          if (_list(r['standard_terms_changes']).isNotEmpty)
+            _Section(
+              icon: Icons.compare_arrows,
+              title: 'Changes to the standard terms (${_changeCount(r)})',
+              initiallyExpanded: _changeCount(r) > 0,
+              children: _list(r['standard_terms_changes']).map((e) {
+                final m = e as Map;
+                final status = _s(m['status']);
+                final lines = <String>[
+                  if (_s(m['prescribed']).isNotEmpty) 'Standard form: “${_s(m['prescribed'])}”',
+                  if (_s(m['document_says']).isNotEmpty) 'This agreement: “${_s(m['document_says'])}”',
+                  if (_s(m['effect']).isNotEmpty) _s(m['effect']),
+                ];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(
+                      [_s(m['clause']), status].where((x) => x.isNotEmpty).join(' — '),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: _isChange(status) ? kRed : Colors.black87),
+                    ),
+                    ...lines.map((l) => Padding(padding: const EdgeInsets.only(top: 2), child: Text(l))),
+                  ]),
+                );
+              }).toList(),
+            ),
+          if (_list(r['tick_boxes']).isNotEmpty)
+            _Section(
+              icon: Icons.check_box_outlined,
+              title: 'Tick-boxes (${_tickProblems(r)} to check)',
+              initiallyExpanded: _tickProblems(r) > 0,
+              children: _list(r['tick_boxes']).map((e) {
+                final m = e as Map;
+                final status = _s(m['status']);
+                final bad = status != 'ok';
+                final where = [_s(m['document']), _s(m['page']).isEmpty ? '' : 'p ${_s(m['page'])}']
+                    .where((x) => x.isNotEmpty)
+                    .join(', ');
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Icon(bad ? Icons.error_outline : Icons.check, size: 20, color: bad ? kAmber : kGreen),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(_s(m['group']), style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text('Marked: ${_s(m['ticked']).isEmpty ? 'nothing' : _s(m['ticked'])}'
+                            '${where.isEmpty ? '' : ' ($where)'}'),
+                        if (_s(m['issue']).isNotEmpty) Text(_s(m['issue']), style: TextStyle(color: kAmber)),
+                      ]),
+                    ),
+                  ]),
+                );
+              }).toList(),
+            ),
           if (_list(r['blanks']).isNotEmpty)
             _Section(
               icon: Icons.edit_note,
               title: 'Blank or incomplete (${_list(r['blanks']).length})',
-              children: _list(r['blanks'])
-                  .map((e) => _bullet('${_s((e as Map)['field'])} — ${_s(e['document'])}'))
-                  .toList(),
+              children: _list(r['blanks']).map((e) {
+                final m = e as Map;
+                final where = [_s(m['document']), _s(m['page']).isEmpty ? '' : 'p ${_s(m['page'])}']
+                    .where((x) => x.isNotEmpty)
+                    .join(', ');
+                final why = _s(m['why']);
+                return _bullet('${_s(m['field'])} — $where${why.isEmpty ? '' : '. $why'}');
+              }).toList(),
             ),
           if (_list(r['questions']).isNotEmpty)
             _Section(
@@ -244,6 +304,15 @@ class _ReportScreenState extends State<ReportScreen> {
       ),
     );
   }
+
+  static bool _isChange(String status) =>
+      const ['changed', 'missing', 'added', 'old version'].contains(status.toLowerCase());
+
+  int _changeCount(Map r) =>
+      _list(r['standard_terms_changes']).where((e) => _isChange(_s((e as Map)['status']))).length;
+
+  int _tickProblems(Map r) =>
+      _list(r['tick_boxes']).where((e) => _s((e as Map)['status']) != 'ok').length;
 
   Widget _kv(String k, dynamic v) {
     final t = _s(v);

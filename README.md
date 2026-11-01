@@ -38,7 +38,8 @@ The release build is signed with the debug key, which is fine for sideloading. U
 
 | File | Purpose |
 | --- | --- |
-| `lib/prompt.dart` | Checking instructions (law, checklist, JSON output shape) |
+| `lib/prompt.dart` | Checking instructions (law, checklist, JSON output shape); version stamped into each report as `_prompt_version` |
+| `lib/standard_form.dart` | The prescribed standard form of site agreement (FT6571 Sep 2024), sent with every check for a word-for-word comparison. Replace it if Fair Trading issues a new version |
 | `lib/analyzer.dart` | Photo resizing, Claude API call (streaming), report parsing |
 | `lib/models.dart` | Cases, documents, local storage |
 | `lib/report_pdf.dart` | PDF report, and scanned pages to PDF |
