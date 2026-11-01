@@ -30,7 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _save() async {
     s.apiKey = _key.text.trim();
-    s.arpraEmail = _email.text.trim().isEmpty ? 'gary.martin@arpra.org.au' : _email.text.trim();
+    s.arpraEmail = _email.text.trim().isEmpty ? 'prepurchase@arpra.org.au' : _email.text.trim();
     s.paymentLink = _link.text.trim();
     s.feeText = _fee.text.trim();
     s.model = _model;

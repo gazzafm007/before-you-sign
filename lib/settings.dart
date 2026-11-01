@@ -18,7 +18,7 @@ class AppSettings {
 
   String apiKey = '';
   String model = defaultModel;
-  String arpraEmail = 'gary.martin@arpra.org.au';
+  String arpraEmail = 'prepurchase@arpra.org.au';
   String paymentLink = '';
   String feeText = '';
   double textScale = 1.0;
