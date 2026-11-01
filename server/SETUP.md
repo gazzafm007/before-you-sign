@@ -79,8 +79,11 @@ replaced without affecting the mediation app.
 
 1. Go to <https://entra.microsoft.com> as a Microsoft 365 admin.
 2. **App registrations → New registration**. Name: `Before You Sign server`.
-   Supported account types: *this organisational directory only*. No redirect
-   URI. **Register**.
+   Supported account types: the **single-tenant** option, the one that names
+   ARPRA's own directory (worded "Accounts in this organizational directory
+   only (ARPRA only – Single tenant)" or "Single tenant only", depending on the
+   version of the page). Not the options mentioning multiple tenants or
+   personal Microsoft accounts. No redirect URI. **Register**.
 3. On the app's **Overview** page copy the **Application (client) ID** and the
    **Directory (tenant) ID**.
 4. **Certificates & secrets → New client secret**. Description
