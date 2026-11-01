@@ -251,7 +251,11 @@ Future<File> buildReportPdf(CheckCase c, Directory outDir) async {
     ],
   ));
 
-  final safe = c.displayTitle.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_');
+  // Keep the file name short: Android refuses names over 255 bytes, and the
+  // community name in a report can be a whole sentence.
+  var safe = c.displayTitle.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_');
+  if (safe.length > 40) safe = safe.substring(0, 40);
+  safe = safe.replaceAll(RegExp(r'^_+|_+$'), '');
   final f = File('${outDir.path}/BeforeYouSign_${safe}_${c.reference}.pdf');
   await f.writeAsBytes(await doc.save());
   return f;

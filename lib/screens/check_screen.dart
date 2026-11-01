@@ -92,7 +92,8 @@ class _CheckScreenState extends State<CheckScreen> {
         final bytes = await f.xFile.readAsBytes();
         final ext = (f.extension ?? '').toLowerCase();
         if (ext == 'pdf') {
-          final safe = f.name.replaceAll(RegExp(r'[^A-Za-z0-9._-]+'), '_');
+          var safe = f.name.replaceAll(RegExp(r'[^A-Za-z0-9._-]+'), '_');
+          if (safe.length > 80) safe = safe.substring(safe.length - 80);
           final dest = '${dir.path}/${d.kind.short}_${_stamp()}_$safe';
           await File(dest).writeAsBytes(bytes);
           d.files.add(DocFile(dest, true));

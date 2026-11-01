@@ -238,7 +238,10 @@ OUTPUT: Reply with ONLY one JSON object, no markdown fences, exactly this shape:
 "amber" = ask about. "green" = looks usual. Keep each "detail" to 1-3
 sentences. "where" = document and clause/page. "ask" = the question to put
 to the operator or seller. Aim for completeness over brevity in red/amber,
-tick_boxes, standard_terms_changes and blanks. "page" = the page number as
+tick_boxes, standard_terms_changes and blanks. "community", "site", "operator"
+and "buyer" are short names only (e.g. "Valla Beach Holiday Park", "41") — put
+any explanation (other names used, address not stated) in "summary" or an
+amber item instead. "page" = the page number as
 printed, or the photographed page number. In "tick_boxes", "ticked" says
 what is marked (e.g. "Option 1 Fixed method; CPI") and "issue" is empty when
 status is "ok".

@@ -106,12 +106,14 @@ class CheckCase {
   String get reference => 'BYS-$id';
 
   String get displayTitle {
-    final c = (report?['community'] as String?)?.trim().isNotEmpty == true
+    var c = (report?['community'] as String?)?.trim().isNotEmpty == true
         ? report!['community'] as String
         : community;
-    final s = (report?['site'] as String?)?.trim().isNotEmpty == true
+    var s = (report?['site'] as String?)?.trim().isNotEmpty == true
         ? report!['site'] as String
         : site;
+    if (c.length > 60) c = '${c.substring(0, 57)}…';
+    if (s.length > 20) s = '${s.substring(0, 17)}…';
     if (c.isEmpty && s.isEmpty) return 'Check $reference';
     if (s.isEmpty) return c;
     return c.isEmpty ? 'Site $s' : '$c · Site $s';
