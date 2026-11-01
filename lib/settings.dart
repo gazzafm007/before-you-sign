@@ -9,6 +9,8 @@ class AppSettings {
   static const _kPayLink = 'stripe_link';
   static const _kFee = 'fee_text';
   static const _kTextScale = 'text_scale';
+  static const _kServer = 'server_url';
+  static const _kServerKey = 'server_key';
 
   static const defaultModel = 'claude-opus-5-5';
   static const models = {
@@ -23,6 +25,12 @@ class AppSettings {
   String feeText = '';
   double textScale = 1.0;
 
+  /// ARPRA's Before You Sign server folder, e.g. https://www.arpra.org.au/bys
+  /// When set, payment is confirmed by the server (Stripe webhook) and the
+  /// documents are uploaded there instead of emailed from the phone.
+  String serverUrl = '';
+  String serverKey = '';
+
   static final AppSettings instance = AppSettings();
 
   Future<void> load() async {
@@ -34,6 +42,8 @@ class AppSettings {
     paymentLink = p.getString(_kPayLink) ?? '';
     feeText = p.getString(_kFee) ?? '';
     textScale = p.getDouble(_kTextScale) ?? 1.0;
+    serverUrl = p.getString(_kServer) ?? '';
+    serverKey = p.getString(_kServerKey) ?? '';
   }
 
   Future<void> save() async {
@@ -44,6 +54,19 @@ class AppSettings {
     await p.setString(_kPayLink, paymentLink.trim());
     await p.setString(_kFee, feeText.trim());
     await p.setDouble(_kTextScale, textScale);
+    await p.setString(_kServer, serverUrl.trim());
+    await p.setString(_kServerKey, serverKey.trim());
+  }
+
+  bool get hasServer => serverUrl.trim().isNotEmpty && serverKey.trim().isNotEmpty;
+
+  /// Builds the address of one of the server scripts, e.g. check.php.
+  Uri serverUri(String script, [Map<String, String>? query]) {
+    var base = serverUrl.trim();
+    while (base.endsWith('/')) {
+      base = base.substring(0, base.length - 1);
+    }
+    return Uri.parse('$base/$script').replace(queryParameters: query);
   }
 
   bool get hasKey => apiKey.trim().isNotEmpty;

@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -13,8 +15,13 @@ import '../models.dart';
 import '../report_pdf.dart';
 import '../settings.dart';
 
-/// Test version of the paid upgrade: pay ARPRA's pre-purchase advice fee
-/// (Stripe Payment Link) and send the documents and report to ARPRA by email.
+/// The paid upgrade: pay ARPRA's pre-purchase advice fee (Stripe Payment
+/// Link) and send the documents and report to ARPRA.
+///
+/// With an ARPRA server set in Settings, payment is confirmed by the server
+/// (Stripe tells it directly through a webhook) and the documents are
+/// uploaded there. Without one, the test-build fallback asks the buyer and
+/// sends the documents by email from the phone.
 class UpgradeScreen extends StatefulWidget {
   final CheckCase checkCase;
   const UpgradeScreen({super.key, required this.checkCase});
@@ -22,7 +29,7 @@ class UpgradeScreen extends StatefulWidget {
   State<UpgradeScreen> createState() => _UpgradeScreenState();
 }
 
-class _UpgradeScreenState extends State<UpgradeScreen> {
+class _UpgradeScreenState extends State<UpgradeScreen> with WidgetsBindingObserver {
   CheckCase get c => widget.checkCase;
   late final _name = TextEditingController(text: c.buyer);
   final _email = TextEditingController();
@@ -31,9 +38,38 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
   bool _consent = false;
   bool _paid = false;
   bool _sending = false;
+  bool _sent = false;
+
+  // Server payment confirmation.
+  bool _waiting = false; // payment page opened, waiting for Stripe
+  bool _checking = false;
+  bool _testPayment = false;
+  Timer? _poll;
+  int _polls = 0;
+
+  AppSettings get _s => AppSettings.instance;
+  bool get _useServer => _s.hasServer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // The buyer may have paid earlier and come back to this screen.
+    if (_useServer) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _checkPaid(quiet: true));
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Coming back from the Stripe page in the browser.
+    if (state == AppLifecycleState.resumed && _waiting && !_paid) _checkPaid(quiet: true);
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _poll?.cancel();
     _name.dispose();
     _email.dispose();
     _phone.dispose();
@@ -64,6 +100,10 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
       return;
     }
     if (!mounted) return;
+    if (_useServer) {
+      _startPolling();
+      return;
+    }
     final done = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -76,6 +116,82 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
       ),
     );
     if (done == true) setState(() => _paid = true);
+  }
+
+  /// Checks with ARPRA's server every few seconds for up to 15 minutes.
+  void _startPolling() {
+    _poll?.cancel();
+    _polls = 0;
+    setState(() => _waiting = true);
+    _poll = Timer.periodic(const Duration(seconds: 4), (t) {
+      _polls++;
+      if (_paid || _polls > 225 || !mounted) {
+        t.cancel();
+        return;
+      }
+      _checkPaid(quiet: true);
+    });
+  }
+
+  /// Asks the server whether Stripe has confirmed payment for this case.
+  Future<void> _checkPaid({bool quiet = false}) async {
+    if (_checking || !_useServer) return;
+    setState(() => _checking = true);
+    try {
+      final resp = await http
+          .get(_s.serverUri('check.php', {'ref': c.reference}), headers: {'X-BYS-Key': _s.serverKey})
+          .timeout(const Duration(seconds: 20));
+      if (resp.statusCode == 403) {
+        if (!quiet) _snack('The server key in Settings was not accepted.');
+        return;
+      }
+      if (resp.statusCode != 200) {
+        if (!quiet) _snack('Could not check the payment (error ${resp.statusCode}). Please try again.');
+        return;
+      }
+      final j = jsonDecode(resp.body) as Map<String, dynamic>;
+      if (!mounted) return;
+      if (j['paid'] == true) {
+        _poll?.cancel();
+        setState(() {
+          _paid = true;
+          _waiting = false;
+          _testPayment = j['test'] == true;
+          _sent = j['emailed'] == true;
+        });
+      } else if (!quiet) {
+        _snack('No payment has been confirmed yet. If you have just paid, wait a moment and try again.');
+      }
+    } catch (_) {
+      if (!quiet && mounted) _snack('Could not reach ARPRA to check the payment. Check your internet connection.');
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  /// Uploads everything to ARPRA's server, which emails it to ARPRA once
+  /// payment is confirmed. Returns true when it has been sent to ARPRA.
+  Future<bool> _upload(List<String> files, Map<String, dynamic> meta) async {
+    final req = http.MultipartRequest('POST', _s.serverUri('request.php'))
+      ..headers['X-BYS-Key'] = _s.serverKey
+      ..fields['ref'] = c.reference
+      ..fields['meta'] = jsonEncode(meta);
+    for (final p in files) {
+      req.files.add(await http.MultipartFile.fromPath('files[]', p));
+    }
+    final streamed = await req.send().timeout(const Duration(minutes: 6));
+    final resp = await http.Response.fromStream(streamed);
+    Map<String, dynamic> j = {};
+    try {
+      j = jsonDecode(resp.body) as Map<String, dynamic>;
+    } catch (_) {}
+    if (resp.statusCode == 413) {
+      throw Exception('The documents are too large to send in one go. Remove duplicate pages or use PDFs instead of photos.');
+    }
+    if (resp.statusCode != 200 || j['ok'] != true) {
+      throw Exception(j['error'] ?? 'The server replied with error ${resp.statusCode}.');
+    }
+    return j['emailed'] == true;
   }
 
   Future<void> _send() async {
@@ -124,6 +240,30 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
         ..writeln('Attached: the app report (PDF), each document, and the case data (JSON).')
         ..writeln('Sent from Before You Sign (test build) on ${DateFormat('d MMM yyyy h:mm a').format(DateTime.now())}.');
 
+      if (_useServer) {
+        final emailed = await _upload(attachments, {
+          'contact': {'name': _name.text, 'email': _email.text, 'phone': _phone.text, 'signing_date': _when.text},
+          'title': c.displayTitle,
+          'rating': r['overall_rating'] ?? '',
+          'rating_reason': r['overall_reason'] ?? '',
+        });
+        if (!mounted) return;
+        setState(() => _sent = emailed);
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(emailed ? 'Sent to ARPRA' : 'Received by ARPRA'),
+            content: Text(emailed
+                ? 'Your documents are with ARPRA (reference ${c.reference}). An adviser will contact you. '
+                    'Please keep this reference.'
+                : 'ARPRA has received your documents (reference ${c.reference}). They will be passed to an '
+                    'adviser shortly. Please keep this reference.'),
+            actions: [FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+          ),
+        );
+        return;
+      }
+
       final subject = 'Pre-purchase review request ${c.reference} – ${c.displayTitle}';
       try {
         await FlutterEmailSender.send(Email(
@@ -141,7 +281,8 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
         ));
       }
     } catch (e) {
-      _snack('Could not prepare the email: $e');
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      _snack(_useServer ? 'Could not send to ARPRA: $msg' : 'Could not prepare the email: $msg');
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -197,24 +338,42 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
           Text('2. Pay securely', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           FilledButton.icon(
-            onPressed: _detailsOk && !_paid ? _pay : null,
+            onPressed: _detailsOk && !_paid && !_waiting ? _pay : null,
             icon: Icon(_paid ? Icons.check : Icons.lock_outline),
-            label: Text(_paid ? 'Paid' : 'Pay with card (Stripe)'),
+            label: Text(_paid ? (_testPayment ? 'Paid (test payment)' : 'Paid') : 'Pay with card (Stripe)'),
           ),
+          if (_waiting && !_paid) ...[
+            const SizedBox(height: 10),
+            Row(children: [
+              const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+              const SizedBox(width: 10),
+              const Expanded(child: Text('Waiting for the payment to be confirmed…')),
+              TextButton(onPressed: _checking ? null : () => _checkPaid(), child: const Text('Check now')),
+            ]),
+            TextButton(
+              onPressed: () {
+                _poll?.cancel();
+                setState(() => _waiting = false);
+              },
+              child: const Text('I did not pay – go back'),
+            ),
+          ],
           const SizedBox(height: 16),
           Text('3. Send to ARPRA', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           FilledButton.icon(
-            onPressed: _detailsOk && _paid && !_sending ? _send : null,
+            onPressed: _detailsOk && _paid && !_sending && !_sent ? _send : null,
             icon: _sending
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.send),
-            label: const Text('Send my documents'),
+            label: Text(_sent ? 'Sent to ARPRA' : 'Send my documents'),
           ),
           const SizedBox(height: 8),
           Text(
-            'Test build: this opens your email app with everything attached, addressed to ${AppSettings.instance.arpraEmail}. '
-            'Just press Send. (In the public version this will upload automatically.)',
+            _useServer
+                ? 'Your documents and this report are sent securely to ARPRA (reference ${c.reference}).'
+                : 'Test build: this opens your email app with everything attached, addressed to '
+                    '${AppSettings.instance.arpraEmail}. Just press Send.',
             style: const TextStyle(fontSize: 14, color: Colors.black54),
           ),
         ],

@@ -1,0 +1,7 @@
+# Before You Sign server folder
+Options -Indexes
+
+# Never serve the settings or helper files.
+<FilesMatch "^(config.*\.php|lib\.php|retry\.php|\.user\.ini)$">
+    Require all denied
+</FilesMatch>

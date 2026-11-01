@@ -20,7 +20,7 @@ The report can be shared as a PDF. "Get ARPRA to review" sends the documents and
 - **Claude API key:** entered in the app's Settings and stored only on the phone. Use a key from a separate "Before You Sign" workspace with a spend limit. Never commit a key to this repository.
 - **Default model:** `claude-opus-5-5`. Sonnet can be chosen in Settings.
 - **Payments:** the Stripe Payment Link, the fee text and the ARPRA email address are all set in Settings. The app adds the case reference to the payment link as `client_reference_id`.
-- **Hand-off:** in the test build this is an email from the phone (via flutter_email_sender) with the report PDF, each document as a PDF, and a JSON case file attached.
+- **Hand-off:** with an ARPRA server set in Settings, payment is confirmed by Stripe's webhook and the report, documents and case file are uploaded to the server, which emails them to prepurchase@arpra.org.au. Without a server, the app falls back to asking the buyer and emailing from the phone.
 
 ## Build
 
@@ -45,6 +45,7 @@ The release build is signed with the debug key, which is fine for sideloading. U
 | `lib/report_pdf.dart` | PDF report, and scanned pages to PDF |
 | `lib/sample.dart` | Built-in sample report (fictional community) |
 | `lib/screens/` | Home, documents, progress, report, ARPRA review, settings |
+| `server/bys/` | PHP scripts for ARPRA's cPanel hosting: Stripe webhook, payment check, document upload, email to prepurchase@. Set-up: `server/SETUP.md` |
 
 ## Plan
 

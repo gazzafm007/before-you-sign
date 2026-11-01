@@ -15,6 +15,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final _email = TextEditingController(text: s.arpraEmail);
   late final _link = TextEditingController(text: s.paymentLink);
   late final _fee = TextEditingController(text: s.feeText);
+  late final _server = TextEditingController(text: s.serverUrl);
+  late final _serverKey = TextEditingController(text: s.serverKey);
   late String _model = s.model;
   late double _scale = s.textScale;
   bool _show = false;
@@ -25,6 +27,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _email.dispose();
     _link.dispose();
     _fee.dispose();
+    _server.dispose();
+    _serverKey.dispose();
     super.dispose();
   }
 
@@ -33,6 +37,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     s.arpraEmail = _email.text.trim().isEmpty ? 'prepurchase@arpra.org.au' : _email.text.trim();
     s.paymentLink = _link.text.trim();
     s.feeText = _fee.text.trim();
+    s.serverUrl = _server.text.trim();
+    s.serverKey = _serverKey.text.trim();
     s.model = _model;
     s.textScale = _scale;
     await s.save();
@@ -114,10 +120,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
               helperText: 'e.g. \$165 including GST',
             ),
           ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _server,
+            keyboardType: TextInputType.url,
+            autocorrect: false,
+            decoration: const InputDecoration(
+              labelText: 'ARPRA server (optional)',
+              helperText: 'e.g. https://www.arpra.org.au/bys — confirms payment with Stripe and receives the documents.',
+              helperMaxLines: 3,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _serverKey,
+            autocorrect: false,
+            enableSuggestions: false,
+            decoration: const InputDecoration(
+              labelText: 'Server key',
+              helperText: 'The app_key from config.php on the server.',
+            ),
+          ),
           const SizedBox(height: 24),
           FilledButton(onPressed: _save, child: const Text('Save')),
           const SizedBox(height: 24),
-          const Text('Before You Sign · test build 0.1 · ARPRA Limited',
+          const Text('Before You Sign · test build 0.2 · ARPRA Limited',
               textAlign: TextAlign.center, style: TextStyle(color: Colors.black54, fontSize: 14)),
         ],
       ),

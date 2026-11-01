@@ -1,0 +1,3 @@
+# Real settings and data never go in Git
+bys/config.php
+bys-data/
