@@ -39,6 +39,23 @@ Allow about an hour. Do the steps in order. Everything here uses the Stripe
    `.htaccess`, `.user.ini`, `check.php`, `config.sample.php`, `index.html`,
    `lib.php`, `request.php`, `retry.php`, `stripe-webhook.php`, `thanks.html`.
 
+## 1b. Let the scripts through the website firewall
+
+ARPRA's site sits behind **GoDaddy Website Security** (Sucuri). It blocks
+automated POST requests as "Fake bot access", which stops Stripe's webhook
+(and can stop the app). The scripts check their own callers — Stripe's
+signature and the app key — so the `/bys/` folder can safely bypass it:
+
+1. Open GoDaddy **Website Security** for arpra.org.au → **Firewall** →
+   **Settings** (or the Sucuri dashboard) → **Access Control**.
+2. Under **Allowlist URL Paths** (may be called "Whitelist URL Paths"), add
+   `/bys/` with the pattern set to **begins with**. Save.
+3. If there is no such option, open a GoDaddy support ticket asking them to
+   allowlist the path `/bys/` on www.arpra.org.au for Stripe webhooks and the
+   app (block reason seen: FBP007 "Fake bot access").
+
+Changes can take a few minutes to apply.
+
 ## 2. Check PHP
 
 1. cPanel → **MultiPHP Manager**: the domain should be on **PHP 8.1 or later**.

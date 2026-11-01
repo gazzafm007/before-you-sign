@@ -142,7 +142,11 @@ class _UpgradeScreenState extends State<UpgradeScreen> with WidgetsBindingObserv
           .get(_s.serverUri('check.php', {'ref': c.reference}), headers: {'X-BYS-Key': _s.serverKey})
           .timeout(const Duration(seconds: 20));
       if (resp.statusCode == 403) {
-        if (!quiet) _snack('The server key in Settings was not accepted.');
+        if (!quiet) {
+          _snack(resp.body.contains('Website Security')
+              ? 'ARPRA\'s website firewall blocked the payment check (error 403).'
+              : 'The server key in Settings was not accepted.');
+        }
         return;
       }
       if (resp.statusCode != 200) {
@@ -189,6 +193,13 @@ class _UpgradeScreenState extends State<UpgradeScreen> with WidgetsBindingObserv
       throw Exception('The documents are too large to send in one go. Remove duplicate pages or use PDFs instead of photos.');
     }
     if (resp.statusCode != 200 || j['ok'] != true) {
+      if (j['error'] == 'Not allowed.') {
+        throw Exception('the server key in Settings does not match the server (error 403).');
+      }
+      if (resp.body.contains('Website Security')) {
+        throw Exception('ARPRA\'s website firewall blocked the upload (error ${resp.statusCode}). '
+            'The /bys/ folder needs to be allowed in GoDaddy Website Security.');
+      }
       throw Exception(j['error'] ?? 'The server replied with error ${resp.statusCode}.');
     }
     return j['emailed'] == true;
