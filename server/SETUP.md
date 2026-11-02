@@ -107,11 +107,13 @@ replaced without affecting the mediation app.
    `bys server`, expiry 24 months. Copy the **Value** straight away (it is only
    shown once). Put a reminder in the calendar to renew it before it expires.
 5. **API permissions → Add a permission → Microsoft Graph → Application
-   permissions → Mail.Send → Add**. Then click **Grant admin consent for
+   permissions → Mail.Send** and **Mail.ReadWrite** → **Add**. (Mail.Send is
+   enough for small emails; documents over 3 MB are attached to a draft
+   first, which needs Mail.ReadWrite.) Then click **Grant admin consent for
    ARPRA**. The status must show a green tick.
 
-> Mail.Send as an application permission lets this app send as any mailbox in
-> ARPRA. To limit it to prepurchase@ only, Microsoft's "RBAC for Applications"
+> Mail.Send and Mail.ReadWrite as application permissions let this app send
+> from, and read, any mailbox in ARPRA. To limit it to prepurchase@ only, Microsoft's "RBAC for Applications"
 > in Exchange Online can scope it to one mailbox (an Exchange PowerShell task;
 > Claude can give you the exact commands). Recommended before going live.
 
