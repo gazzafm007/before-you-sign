@@ -103,6 +103,9 @@ class _ReportScreenState extends State<ReportScreen> {
             'Checked ${DateFormat('d MMMM yyyy').format(c.checkedAt ?? c.created)} · ref ${c.reference}',
             style: const TextStyle(color: Colors.black54, fontSize: 14),
           ),
+          if (c.asAt != null)
+            Text('Test: checked as at ${DateFormat('d MMMM yyyy').format(c.asAt!)}',
+                style: const TextStyle(color: kRed, fontWeight: FontWeight.bold, fontSize: 14)),
           if (c.sample)
             const Padding(
               padding: EdgeInsets.only(top: 6),
@@ -131,6 +134,49 @@ class _ReportScreenState extends State<ReportScreen> {
               Text(_s(r['summary'])),
             ]),
           ),
+          if (_list(r['top_issues']).isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: kAccent, width: 2),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('The ${_list(r['top_issues']).length == 1 ? 'thing' : '${_list(r['top_issues']).length} things'} that matter most',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19, color: kAccent)),
+                const SizedBox(height: 10),
+                ..._list(r['top_issues']).asMap().entries.map((e) {
+                  final m = e.value is Map ? e.value as Map : {'title': e.value};
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Container(
+                        width: 30,
+                        height: 30,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(color: kAccent, shape: BoxShape.circle),
+                        child: Text('${e.key + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(_s(m['title']), style: const TextStyle(fontWeight: FontWeight.bold)),
+                          if (_s(m['why']).isNotEmpty) Text(_s(m['why'])),
+                          if (_s(m['ask']).isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text('Ask: ${_s(m['ask'])}', style: const TextStyle(fontStyle: FontStyle.italic)),
+                            ),
+                        ]),
+                      ),
+                    ]),
+                  );
+                }),
+              ]),
+            ),
+          ],
           _Section(
             icon: Icons.payments_outlined,
             title: 'What it will cost',

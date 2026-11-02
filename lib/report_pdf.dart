@@ -100,6 +100,7 @@ Future<File> buildReportPdf(CheckCase c, Directory outDir) async {
       if (_s(r['buyer']).isNotEmpty || c.buyer.isNotEmpty)
         p('Prepared for: ${c.buyer.isNotEmpty ? c.buyer : _s(r['buyer'])}', size: 10, color: _muted),
       if (c.sample) p('SAMPLE REPORT — fictional community, for demonstration only', size: 10, color: _red),
+      if (c.asAt != null) p('ARPRA TEST — checked as at ${DateFormat('d MMMM yyyy').format(c.asAt!)}', size: 10, color: _red),
       pw.SizedBox(height: 10),
       pw.Container(
         width: double.infinity,
@@ -112,6 +113,29 @@ Future<File> buildReportPdf(CheckCase c, Directory outDir) async {
           p(_s(r['summary'])),
         ]),
       ),
+      if (_list(r['top_issues']).isNotEmpty) ...[
+        pw.SizedBox(height: 10),
+        pw.Container(
+          width: double.infinity,
+          padding: const pw.EdgeInsets.all(10),
+          decoration: pw.BoxDecoration(border: pw.Border.all(color: _accent, width: 1.5), borderRadius: pw.BorderRadius.circular(6)),
+          child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+            pw.Text('The things that matter most', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: _accent)),
+            pw.SizedBox(height: 4),
+            ..._list(r['top_issues']).asMap().entries.map((e) {
+              final m = e.value is Map ? e.value as Map : {'title': e.value};
+              return pw.Padding(
+                padding: const pw.EdgeInsets.only(top: 4),
+                child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                  pw.Text('${e.key + 1}. ${_s(m['title'])}', style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold)),
+                  if (_s(m['why']).isNotEmpty) p(_s(m['why']), size: 10),
+                  if (_s(m['ask']).isNotEmpty) p('Ask: ${_s(m['ask'])}', size: 10, color: _muted),
+                ]),
+              );
+            }),
+          ]),
+        ),
+      ],
       h('What it will cost'),
       row('Proposed site fee', _s(costs['proposed_fee'])),
       row('Current fee for site', _s(costs['current_fee'])),

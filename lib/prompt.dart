@@ -10,7 +10,7 @@
 
 import 'standard_form.dart';
 
-const String kPromptVersion = '0.2';
+const String kPromptVersion = '0.3';
 
 const String kSystemPrompt = '$_kInstructions\n\n'
     '<prescribed_standard_form version="$kStandardFormVersion">\n'
@@ -216,6 +216,7 @@ OUTPUT: Reply with ONLY one JSON object, no markdown fences, exactly this shape:
   "documents_missing": [""],
   "overall_rating": "Low|Moderate|High",
   "overall_reason": "",
+  "top_issues": [{"title": "", "why": "", "ask": ""}],
   "summary": "3-5 plain sentences: what this deal is and the main things to sort out",
   "costs": {
     "proposed_fee": "", "current_fee": "", "community_range": "",
@@ -234,6 +235,10 @@ OUTPUT: Reply with ONLY one JSON object, no markdown fences, exactly this shape:
   "blanks": [{"field": "", "document": "", "page": "", "why": ""}],
   "questions": [""]
 }
+"top_issues" = the 5 (or fewer) things that matter most to THIS buyer, most
+serious first, in the plainest words: what it is, why it matters to them in
+money or rights, and the one question to ask. Each must also appear in red or
+amber with the detail. An older reader may read only this list.
 "red" = look closely before signing (cost, rights, legal conflicts).
 "amber" = ask about. "green" = looks usual. Keep each "detail" to 1-3
 sentences. "where" = document and clause/page. "ask" = the question to put
@@ -249,6 +254,7 @@ status is "ok".
 
 String buildUserInstruction({
   required String today,
+  bool asAtTest = false,
   String community = '',
   String site = '',
   String buyer = '',
@@ -257,6 +263,14 @@ String buildUserInstruction({
 }) {
   final b = StringBuffer();
   b.writeln("Today's date is $today.");
+  if (asAtTest) {
+    b.writeln('(ARPRA test: this is a past case. Treat $today as today for every date '
+        'check, and judge the documents by the law and the prescribed form in force on '
+        'that date. If the prescribed form you were given came into force after the '
+        'documents were issued, do not report differences that only reflect later '
+        'amendments; say in standard_terms_changes that the comparison is against a later '
+        'version of the form.)');
+  }
   b.writeln('The documents attached above, in order, are:');
   for (final l in docLabels) {
     b.writeln('- $l');

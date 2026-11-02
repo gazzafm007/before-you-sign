@@ -101,7 +101,8 @@ class Analyzer {
     content.add({
       'type': 'text',
       'text': buildUserInstruction(
-        today: DateFormat('d MMMM yyyy').format(DateTime.now()),
+        today: DateFormat('d MMMM yyyy').format(c.asAt ?? DateTime.now()),
+        asAtTest: c.asAt != null,
         community: c.community,
         site: c.site,
         buyer: c.buyer,

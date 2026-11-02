@@ -77,6 +77,10 @@ class CheckCase {
   DateTime? checkedAt;
   bool sample;
 
+  /// Testing only: check the documents as if today were this date (for
+  /// re-running past cases). Null = today.
+  DateTime? asAt;
+
   CheckCase({
     required this.id,
     required this.created,
@@ -89,6 +93,7 @@ class CheckCase {
     this.model,
     this.checkedAt,
     this.sample = false,
+    this.asAt,
   }) : docs = docs ??
             [
               CaseDoc(DocKind.disclosure),
@@ -131,6 +136,7 @@ class CheckCase {
         'model': model,
         'checkedAt': checkedAt?.toIso8601String(),
         'sample': sample,
+        'asAt': asAt?.toIso8601String(),
       };
 
   factory CheckCase.fromJson(Map<String, dynamic> j) => CheckCase(
@@ -145,6 +151,7 @@ class CheckCase {
         model: j['model'],
         checkedAt: j['checkedAt'] == null ? null : DateTime.parse(j['checkedAt']),
         sample: j['sample'] ?? false,
+        asAt: j['asAt'] == null ? null : DateTime.parse(j['asAt']),
       );
 }
 
