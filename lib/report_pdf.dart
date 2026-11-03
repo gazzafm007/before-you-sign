@@ -50,6 +50,12 @@ Future<File> buildReportPdf(CheckCase c, Directory outDir) async {
         ),
         child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
           pw.Text(_s(m['title']), style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: _ink)),
+          if (basisLabel(m['basis'], m['law']).isNotEmpty)
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(top: 1),
+              child: pw.Text(basisLabel(m['basis'], m['law']),
+                  style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: fg)),
+            ),
           if (_s(m['detail']).isNotEmpty) pw.SizedBox(height: 2),
           if (_s(m['detail']).isNotEmpty) p(_s(m['detail']), size: 10),
           if (_s(m['where']).isNotEmpty)

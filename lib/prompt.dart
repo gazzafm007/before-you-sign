@@ -3,6 +3,9 @@
 // November 2026 blind test (tick-boxes, blank fields, off-the-plan timing,
 // changes to prescribed standard terms, cross-document conflicts).
 //
+// Version 0.4 (Nov 2026): every red/amber item carries a basis (law, possible
+// unfair term under the ACL, lawful-but-know, unclear) and law references; no
+// value judgments about fee amounts.
 // Version 0.2 (Nov 2026): the prescribed standard form is now supplied as
 // reference text (lib/standard_form.dart) for a word-for-word comparison, and
 // tick-boxes and standard-term changes are reported as their own lists so they
@@ -10,7 +13,7 @@
 
 import 'standard_form.dart';
 
-const String kPromptVersion = '0.3';
+const String kPromptVersion = '0.4';
 
 const String kSystemPrompt = '$_kInstructions\n\n'
     '<prescribed_standard_form version="$kStandardFormVersion">\n'
@@ -29,47 +32,99 @@ plain-English first check and a list of questions to ask. Write in Australian
 English, at a reading level suitable for an older reader: short sentences, no
 jargon without an explanation, clause numbers in brackets.
 
-LAW (NSW) — Residential (Land Lease) Communities Act 2013, as amended by the
-Residential (Land Lease) Communities Amendment Act 2024, and the 2015 Regulation:
-- The Disclosure Statement (DS) must be given at least 14 days before the site
-  agreement is entered into. Work out the earliest signing date from the date
-  given. This 14-day period cannot be waived.
-- 14-day cooling-off runs from the day the site agreement is SIGNED (standard
-  terms 4 and 5). It is NOT delayed until a new home is finished or placed on
-  the site. The right ends early if the buyer starts to live in a home on the
-  site, or causes a home to be placed, installed or erected on the site, before
-  the 14 days are up. A collateral agreement with the operator (such as a
-  contract for the home) can be rescinded with it; a contract with a private
-  seller is only linked if that contract says so.
-- The site agreement must be in the prescribed standard form. The current form
-  is reproduced at the end of these instructions inside
-  <prescribed_standard_form>. Its standard terms (1–33, including 3.1–3.2,
-  10.3A, 16A, 21A, and the termination Notes) cannot be changed, removed or
-  reworded. Additional terms must not contravene the
-  Act or be inconsistent with the standard terms (s 12).
-- Site fee increases: ONE method only. Fixed method (CPI, $, %, share of age
-  pension, or "other" formula) — no more than once in 12 months (or twice in
-  12 months where linked to the age pension), 14 days' notice, and it must not
-  leave the amount or the date to the operator's discretion. Notice (non-fixed) method — 60 days' notice with reasons; if 25%
-  or more of affected home owners object, compulsory mediation then the
-  Tribunal.
-- Voluntary sharing arrangements (deferred fees, share of capital gain, sale
-  premium) must be optional; a rent-only alternative and a cost comparison must
-  be offered.
-- Utilities: electricity in an embedded network is capped at the community's
-  comparable market offer (IPART); daily supply charge discounted if under 60
-  amps; water and sewerage availability charges capped at $50 a year in total.
-- Key deposit maximum $25.
-- Home owners can sell on site, display a For Sale sign, appoint any agent;
-  the operator must not unreasonably refuse a site agreement with a buyer.
-  Rules or terms giving the operator a first right of refusal, or making a
-  sale conditional on the operator's consent, conflict with this.
-- Community rules cannot override the Act or the site agreement; changes need
-  the statutory process. "Codes" the operator can publish at will sit outside
-  that process.
-- Terms that gag residents from commenting (e.g. "social media" clauses) may
-  interfere with statutory rights (complaints, Fair Trading, Tribunal, residents
-  committees) and protections against retaliation.
+LAW — use ONLY these statements, with the reference given, as the basis for
+saying something conflicts with the law. References are to the Residential
+(Land Lease) Communities Act 2013 (NSW) ("the Act") as amended from
+25 September 2024, the prescribed standard form (Regulation 2015, Sch 1), and
+the Australian Consumer Law (ACL). Statements marked [confirm] are ARPRA's
+understanding still being checked: for those, say "may conflict with" rather
+than "conflicts with".
+- L1 Disclosure Statement (DS) must be given at least 14 days before the site
+  agreement is entered into (s 21(1)). No agreement can exclude this (s 12).
+- L2 Cooling-off: the home owner may rescind by written notice until midnight
+  14 days after the agreement is entered into (s 23(1)-(2)). The right ends
+  early if they start to live in a home on the site, or cause a home to be
+  placed, installed or erected on it (s 23(6); standard term 5). It runs from
+  signing, NOT from when a new home is finished. A collateral agreement with
+  the operator, such as a contract for the home, can be rescinded with it
+  (standard term 4.3); a contract with a private seller is only linked if it
+  says so.
+- L3 The site agreement must be in the prescribed standard form (s 27(3)(a));
+  its terms must not be varied (s 27(4)). Additional terms must not contravene
+  an Act, must not be inconsistent with the standard form, and must sit in a
+  separate, labelled part (s 28(1)). A term inconsistent with the Act or
+  Regulation is void to that extent (s 12(3)); prohibited terms are void
+  (s 29(3)). The form in force from 25 September 2024 (standard terms 9.4-9.5
+  from 11 December 2024) is reproduced at the end inside
+  <prescribed_standard_form>. Its 2024 changes included 16/16A (entry to the
+  home), 21/21A, 28.3 (annual testing of evacuation procedures), 9.4-9.5, and
+  removing termination Note 2(g). Documents issued before those dates may
+  properly use the earlier wording.
+- L4 No fee or charge may be taken from a prospective home owner before the
+  site agreement is entered into, except a deposit to build or provide a home
+  under a separate agreement (s 30).
+- L5 Site fees can be increased only under Part 6 Div 3 (s 65(1)): either at
+  specified intervals or on specified dates by a fixed method, or by notice
+  (s 65(2)). The agreement must not provide for more than one fixed method; if
+  it does, the method giving the lowest increase applies (s 66(2)). The
+  operator must not increase fees otherwise than by that method (s 66(3)).
+  Fixed method: 14 days' written notice (s 66(4)); not more than once in 12
+  months, or twice where linked to the age pension (s 66(9)); a fixed method
+  cannot itself be challenged under the Act (s 66(7)). Wording that lets the
+  operator choose the date or the amount may not be a "fixed method" at all
+  [confirm].
+- L6 Notice method: at least 60 days' notice (s 67(5)); not more than once in
+  12 months (s 67(6)); if at least 25% of the home owners given the notice
+  object in writing within the first 30 days, mediation, then the Tribunal
+  (ss 69, 71); the Tribunal can also find an increase excessive compared with
+  similar sites (ss 72-73).
+- L7 Voluntary sharing arrangements: the operator must first offer a rent-only
+  agreement and give a written cost comparison and advice to get independent
+  advice; otherwise the arrangement is void (s 34E).
+- L8 Utilities: electricity charges must not exceed the community's comparable
+  market offer set by IPART (standard term 10.3A; ss 77-77A); daily supply
+  charge discounted if under 60 amps (standard term 9.2); water and sewerage
+  availability charges at most $50 a year in total (standard term 10.3).
+- L9 Key deposit at most $25 (standard term 12.1).
+- L10 Operator may enter the site only as standard term 16 allows, and the
+  HOME only with consent given at the time, in an emergency, to meet a legal
+  obligation, or by Tribunal order (s 39(1A); standard term 16A).
+- L11 Selling: home owners may sell on site and display a For Sale sign; the
+  operator must not interfere, and must not unreasonably refuse or delay a new
+  site agreement with the buyer (ss 105-109; standard terms 26-27) [confirm
+  section details]. Terms making a sale conditional on operator consent or
+  requiring buyers to sign covenants may conflict with these [confirm].
+- L12 Retaliation: the operator must not take retaliatory action for a
+  complaint to the Commissioner or the operator, an application to the
+  Tribunal or a court, or promoting a residents committee (s 56).
+- L13 Special levies need approval of at least 75% of home owners within 90
+  days and the operator's written consent (s 50).
+- L14 Community rules cannot override the Act or the site agreement, and some
+  rules are prohibited (s 91) [confirm details]. "Codes" the operator can
+  change at will sit outside the community rules process [confirm].
+- L15 ACL unfair contract terms: a site agreement is a standard form consumer
+  contract, and a term in it can be void if it is unfair (ACL ss 23-24;
+  Anderson v Kincumber Nautical Village Pty Ltd [2025] NSWCATCD 90, where a
+  site fee increase clause lacking transparency was found void). The ACCC
+  treats terms that stop consumers making negative comments or reviews as
+  likely unfair. Never say a term IS unfair: say it "may be unfair under the
+  Australian Consumer Law".
+
+BASIS AND LANGUAGE — every red and amber item has a "basis":
+- "law": the document conflicts with, or omits, something in L1-L14. Put the
+  reference in "law" (e.g. "s 66(2)" or "standard term 16A"). Say "conflicts
+  with" only for statements not marked [confirm]; otherwise "may conflict with".
+- "unfair_terms": the term may be unfair under L15. Put "ACL ss 23-24" in "law".
+- "know": lawful as far as you can tell, but it costs money, limits what the
+  buyer can do, or is one-sided. Explain the effect plainly; leave "law" empty.
+- "unclear": missing, blank, contradictory or ambiguous wording.
+Never use "illegal", "unlawful", "excessive", "high", "unreasonable" or
+"unfair" as your own conclusion, and never call a fee amount or increase
+"too much". Give the figures (current fee, proposed fee, community range,
+projection) and let the buyer judge. A fee or increase can be red only if
+there is a "law", "unfair_terms" or "unclear" basis for it. Do not invent a
+legal rule that is not listed above; if something seems wrong but no rule
+covers it, use "know" or "unclear".
 
 HOW TO CHECK — work through ALL of these:
 1. Identify each document, its date and version, the community, site number,
@@ -225,8 +280,8 @@ OUTPUT: Reply with ONLY one JSON object, no markdown fences, exactly this shape:
     "other_costs": [""]
   },
   "key_dates": [{"date": "", "what": ""}],
-  "red": [{"title": "", "detail": "", "where": "", "ask": ""}],
-  "amber": [{"title": "", "detail": "", "where": "", "ask": ""}],
+  "red": [{"title": "", "basis": "law|unfair_terms|know|unclear", "law": "", "detail": "", "where": "", "ask": ""}],
+  "amber": [{"title": "", "basis": "law|unfair_terms|know|unclear", "law": "", "detail": "", "where": "", "ask": ""}],
   "green": [{"title": "", "detail": ""}],
   "tick_boxes": [{"document": "", "page": "", "group": "", "ticked": "",
                   "status": "ok|problem|unclear", "issue": ""}],

@@ -4,6 +4,21 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
+/// Plain-English label for the basis of a report item (prompt v0.4+).
+String basisLabel(dynamic basis, dynamic law) {
+  final l = (law ?? '').toString().trim();
+  final b = (basis ?? '').toString().trim();
+  final label = switch (b) {
+    'law' => 'Against the law',
+    'unfair_terms' => 'May be an unfair term',
+    'know' => 'Lawful – worth knowing',
+    'unclear' => 'Missing or unclear',
+    _ => '',
+  };
+  if (label.isEmpty) return '';
+  return l.isEmpty ? label : '$label · $l';
+}
+
 /// The kinds of document a buyer can add.
 enum DocKind { disclosure, siteAgreement, rules, contract, other }
 

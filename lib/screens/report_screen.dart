@@ -401,6 +401,20 @@ class _ReportScreenState extends State<ReportScreen> {
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(_s(m['title']), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17.5)),
+            if (basisLabel(m['basis'], m['law']).isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: fg.withValues(alpha: .6)),
+                  ),
+                  child: Text(basisLabel(m['basis'], m['law']),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: fg)),
+                ),
+              ),
             if (_s(m['detail']).isNotEmpty) ...[const SizedBox(height: 4), Text(_s(m['detail']))],
             if (_s(m['where']).isNotEmpty) ...[
               const SizedBox(height: 4),
