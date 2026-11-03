@@ -19,6 +19,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final _serverKey = TextEditingController(text: s.serverKey);
   late String _model = s.model;
   late double _scale = s.textScale;
+  late bool _full = s.fullReport;
   bool _show = false;
 
   @override
@@ -41,6 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     s.serverKey = _serverKey.text.trim();
     s.model = _model;
     s.textScale = _scale;
+    s.fullReport = _full;
     await s.save();
     textScale.value = _scale;
     if (mounted) {
@@ -141,10 +143,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               helperText: 'The app_key from config.php on the server.',
             ),
           ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _full,
+            onChanged: (v) => setState(() => _full = v),
+            title: const Text('Show the full report to everyone'),
+            subtitle: const Text('For ARPRA testing. Turn off to see what the public will see: a free summary, '
+                'with the full report after paying for ARPRA\'s review.'),
+          ),
           const SizedBox(height: 24),
           FilledButton(onPressed: _save, child: const Text('Save')),
           const SizedBox(height: 24),
-          const Text('Before You Sign · test build 0.4.1 · ARPRA Limited',
+          const Text('Before You Sign · test build 0.5 · ARPRA Limited',
               textAlign: TextAlign.center, style: TextStyle(color: Colors.black54, fontSize: 14)),
         ],
       ),

@@ -19,6 +19,59 @@ String basisLabel(dynamic basis, dynamic law) {
   return l.isEmpty ? label : '$label · $l';
 }
 
+/// What the free summary shows: titles of red items that conflict with the
+/// law, and counts of everything kept for the full report.
+class ReportSummary {
+  final List<Map> lawRed;
+  final int moreItems;
+  final int unfairTerms;
+  final int unclear;
+  final int toKnow;
+  final int blanks;
+  final int tickProblems;
+  final int termChanges;
+  final int questions;
+
+  ReportSummary._(this.lawRed, this.moreItems, this.unfairTerms, this.unclear, this.toKnow, this.blanks,
+      this.tickProblems, this.termChanges, this.questions);
+
+  factory ReportSummary.of(Map r) {
+    List<Map> l(dynamic v) => v is List ? v.whereType<Map>().toList() : <Map>[];
+    final red = l(r['red']);
+    final amber = l(r['amber']);
+    final items = [...red, ...amber];
+    String b(Map m) => (m['basis'] ?? '').toString();
+    final lawRed = red.where((m) => b(m) == 'law').toList();
+    final changes = l(r['standard_terms_changes'])
+        .where((m) => const ['changed', 'missing', 'added', 'old version'].contains((m['status'] ?? '').toString().toLowerCase()))
+        .length;
+    final ticks = l(r['tick_boxes']).where((m) => (m['status'] ?? '') != 'ok').length;
+    final q = r['questions'] is List ? (r['questions'] as List).length : 0;
+    return ReportSummary._(
+      lawRed,
+      items.length - lawRed.length,
+      items.where((m) => b(m) == 'unfair_terms').length,
+      items.where((m) => b(m) == 'unclear').length,
+      items.where((m) => b(m) == 'know').length,
+      l(r['blanks']).length,
+      ticks,
+      changes,
+      q,
+    );
+  }
+
+  /// Plain-English lines describing what the full report adds.
+  List<String> get lines => [
+        if (moreItems > 0) '$moreItems more thing${moreItems == 1 ? '' : 's'} to look at or ask about',
+        if (unfairTerms > 0) '$unfairTerms term${unfairTerms == 1 ? '' : 's'} that may be unfair under consumer law',
+        if (termChanges > 0) '$termChanges change${termChanges == 1 ? '' : 's'} to the standard terms of the agreement',
+        if (blanks + tickProblems > 0)
+          '${blanks + tickProblems} blank field${blanks + tickProblems == 1 ? '' : 's'} or tick-box problem${blanks + tickProblems == 1 ? '' : 's'}',
+        'what it will cost, with the site fee worked out over 20 years',
+        if (questions > 0) '$questions questions to put to the operator',
+      ];
+}
+
 /// The kinds of document a buyer can add.
 enum DocKind { disclosure, siteAgreement, rules, contract, other }
 
@@ -96,6 +149,9 @@ class CheckCase {
   /// re-running past cases). Null = today.
   DateTime? asAt;
 
+  /// The buyer has paid for ARPRA's review, so the full report is shown.
+  bool fullUnlocked;
+
   CheckCase({
     required this.id,
     required this.created,
@@ -109,6 +165,7 @@ class CheckCase {
     this.checkedAt,
     this.sample = false,
     this.asAt,
+    this.fullUnlocked = false,
   }) : docs = docs ??
             [
               CaseDoc(DocKind.disclosure),
@@ -152,6 +209,7 @@ class CheckCase {
         'checkedAt': checkedAt?.toIso8601String(),
         'sample': sample,
         'asAt': asAt?.toIso8601String(),
+        'fullUnlocked': fullUnlocked,
       };
 
   factory CheckCase.fromJson(Map<String, dynamic> j) => CheckCase(
@@ -167,6 +225,7 @@ class CheckCase {
         checkedAt: j['checkedAt'] == null ? null : DateTime.parse(j['checkedAt']),
         sample: j['sample'] ?? false,
         asAt: j['asAt'] == null ? null : DateTime.parse(j['asAt']),
+        fullUnlocked: j['fullUnlocked'] ?? false,
       );
 }
 

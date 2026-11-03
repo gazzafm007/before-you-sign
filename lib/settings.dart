@@ -11,6 +11,7 @@ class AppSettings {
   static const _kTextScale = 'text_scale';
   static const _kServer = 'server_url';
   static const _kServerKey = 'server_key';
+  static const _kFull = 'full_report';
 
   static const defaultModel = 'claude-opus-5-5';
   static const models = {
@@ -31,6 +32,10 @@ class AppSettings {
   String serverUrl = '';
   String serverKey = '';
 
+  /// Test build: show every buyer the full report. Off = the public
+  /// behaviour (free summary; full report after paying for ARPRA's review).
+  bool fullReport = true;
+
   static final AppSettings instance = AppSettings();
 
   Future<void> load() async {
@@ -44,6 +49,7 @@ class AppSettings {
     textScale = p.getDouble(_kTextScale) ?? 1.0;
     serverUrl = p.getString(_kServer) ?? '';
     serverKey = p.getString(_kServerKey) ?? '';
+    fullReport = p.getBool(_kFull) ?? true;
   }
 
   Future<void> save() async {
@@ -56,6 +62,7 @@ class AppSettings {
     await p.setDouble(_kTextScale, textScale);
     await p.setString(_kServer, serverUrl.trim());
     await p.setString(_kServerKey, serverKey.trim());
+    await p.setBool(_kFull, fullReport);
   }
 
   bool get hasServer => serverUrl.trim().isNotEmpty && serverKey.trim().isNotEmpty;
