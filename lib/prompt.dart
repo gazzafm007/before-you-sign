@@ -290,6 +290,10 @@ OUTPUT: Reply with ONLY one JSON object, no markdown fences, exactly this shape:
   "blanks": [{"field": "", "document": "", "page": "", "why": ""}],
   "questions": [""]
 }
+In "projection", keep "when" short (e.g. "After 2nd increase") and make
+"weekly" the dollar figure only (e.g. "$242.32", optionally "(about $12,600 a
+year)"). Put conditions and caveats in increase_method or other_costs. The JSON
+must contain no comments.
 "top_issues" = the 5 (or fewer) things that matter most to THIS buyer, most
 serious first, in the plainest words: what it is, why it matters to them in
 money or rights, and the one question to ask. Each must also appear in red or

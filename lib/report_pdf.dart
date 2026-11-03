@@ -157,7 +157,7 @@ Future<File> buildReportPdf(CheckCase c, Directory outDir) async {
           cellStyle: const pw.TextStyle(fontSize: 10),
           headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFEEF0FB)),
           border: pw.TableBorder.all(color: _line, width: .5),
-          cellAlignments: {1: pw.Alignment.centerRight},
+          columnWidths: {0: const pw.FlexColumnWidth(1), 1: const pw.FlexColumnWidth(1.6)},
         ),
       ],
       if (_list(costs['other_costs']).isNotEmpty) ...[

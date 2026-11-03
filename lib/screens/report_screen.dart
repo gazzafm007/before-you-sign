@@ -189,18 +189,46 @@ class _ReportScreenState extends State<ReportScreen> {
               _kv('First increase', costs['first_increase']),
               if (_list(costs['projection']).isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Table(
-                  border: TableBorder.all(color: const Color(0xFFDADCE3)),
-                  columnWidths: const {1: IntrinsicColumnWidth()},
-                  children: [
-                    const TableRow(
-                      decoration: BoxDecoration(color: Color(0xFFEEF0FB)),
-                      children: [_Cell('When', bold: true), _Cell('Weekly fee', bold: true)],
-                    ),
-                    ..._list(costs['projection'])
-                        .map((e) => TableRow(children: [_Cell(_s((e as Map)['when'])), _Cell(_s(e['weekly']))])),
-                  ],
-                ),
+                LayoutBuilder(builder: (context, box) {
+                  final rows = _list(costs['projection']).whereType<Map>().toList();
+                  // Narrow screens (a phone held upright): one block per row,
+                  // so long wording runs across the screen instead of down a
+                  // thin column.
+                  if (box.maxWidth < 560) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFDADCE3)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(children: [
+                        for (var i = 0; i < rows.length; i++)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: i.isEven ? Colors.white : const Color(0xFFF5F6FB),
+                              border: i == 0 ? null : const Border(top: BorderSide(color: Color(0xFFDADCE3))),
+                            ),
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text(_s(rows[i]['when']), style: const TextStyle(fontSize: 14.5, color: Colors.black54)),
+                              Text(_s(rows[i]['weekly']), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            ]),
+                          ),
+                      ]),
+                    );
+                  }
+                  return Table(
+                    border: TableBorder.all(color: const Color(0xFFDADCE3)),
+                    columnWidths: const {0: FlexColumnWidth(1), 1: FlexColumnWidth(1.6)},
+                    children: [
+                      const TableRow(
+                        decoration: BoxDecoration(color: Color(0xFFEEF0FB)),
+                        children: [_Cell('When', bold: true), _Cell('Weekly fee', bold: true)],
+                      ),
+                      ...rows.map((e) => TableRow(children: [_Cell(_s(e['when'])), _Cell(_s(e['weekly']))])),
+                    ],
+                  );
+                }),
               ],
               if (_list(costs['other_costs']).isNotEmpty) ...[
                 const SizedBox(height: 10),
