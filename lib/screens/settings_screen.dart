@@ -155,7 +155,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
           FilledButton(onPressed: _save, child: const Text('Save')),
           const SizedBox(height: 24),
-          const Text('Before You Sign · test build 0.5 · ARPRA Limited',
+          const Text('Before You Sign · test build 0.6 · ARPRA Limited',
               textAlign: TextAlign.center, style: TextStyle(color: Colors.black54, fontSize: 14)),
         ],
       ),

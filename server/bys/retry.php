@@ -12,6 +12,44 @@ if (PHP_SAPI !== 'cli') {
 define('BYS', 1);
 require __DIR__ . '/lib.php';
 
+require __DIR__ . '/check_lib.php';
+
+// Checks the host could not keep running after the upload, and checks that
+// stopped part-way.
+foreach (glob(bys_dir('checks') . '/BYS-*', GLOB_ONLYDIR) ?: [] as $dir) {
+    $ref = basename($dir);
+    if (bys_ref($ref) === null) {
+        continue;
+    }
+    $job = bys_job($ref);
+    if ($job === null) {
+        continue;
+    }
+    $age = time() - strtotime($job['updated_at'] ?? 'now');
+    if (($job['status'] ?? '') === 'queued' && $age > 120) {
+        bys_log("$ref starting queued check (cron)");
+        bys_run_job($ref);
+    } elseif (($job['status'] ?? '') === 'running' && $age > 600) {
+        bys_job_update($ref, ['status' => 'error', 'error' => 'The check stopped before it finished. Please try again.']);
+        bys_log("$ref check timed out (cron)");
+    }
+    // Free checks: delete the uploaded documents after keep_check_files_days;
+    // the report is kept (keep_days) in case the buyer asks ARPRA to review it.
+    $fileDays = (int) (bys_config()['keep_check_files_days'] ?? 7);
+    $created = strtotime($job['created_at'] ?? 'now');
+    if ($fileDays > 0 && time() - $created > $fileDays * 86400 && glob($dir . '/files/*')) {
+        foreach (glob($dir . '/files/*') ?: [] as $f) {
+            @unlink($f);
+        }
+        bys_log("$ref check documents deleted after $fileDays days");
+    }
+    $keep = (int) (bys_config()['keep_days'] ?? 90);
+    if ($keep > 0 && time() - $created > $keep * 86400 && is_file($dir . '/report.json')) {
+        @unlink($dir . '/report.json');
+        bys_log("$ref check report deleted after $keep days");
+    }
+}
+
 $keepDays = (int) (bys_config()['keep_days'] ?? 90);
 foreach (glob(bys_dir('requests') . '/BYS-*', GLOB_ONLYDIR) ?: [] as $dir) {
     $ref = basename($dir);

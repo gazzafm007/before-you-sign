@@ -194,6 +194,39 @@ This re-sends any paid request whose email failed (for example, if Microsoft
 5. Save. Optional: copy the link's ID (`plink_…`) into `payment_link_ids` in
    config.php so only this link can mark a case paid.
 
+## 6c. The document check on the server
+
+The check itself runs here, with ARPRA's Claude key, so the key is never on
+buyers' phones. The phone uploads the documents to `analyse.php`, the server
+runs the check and the app follows progress with `status.php`.
+
+1. In the Claude Console, open the **Before You Sign** workspace, set its
+   **monthly spend limit**, and create an API key there.
+2. In `config.php` set `anthropic_api_key` to that key. Leave `claude_model`
+   as it is unless Claude tells you otherwise.
+3. Upload the new files: `analyse.php`, `status.php`, `check_lib.php`, and the
+   `prompt` folder (`system.txt`, `version.txt`, `.htaccess`). Re-upload
+   `lib.php`, `retry.php`, `.htaccess` and `.user.ini`.
+4. Settings to know in `config.php`:
+   - `report_to_app`: `'full'` while ARPRA is testing; `'summary'` for the
+     public (rating, top issues, key dates, items that may conflict with the
+     law, counts). The full report always goes to ARPRA, and to the buyer by
+     email, when they pay.
+   - `max_checks_per_device_per_day` (3) and `max_checks_per_day` (50) cap
+     the Claude bill.
+   - `keep_check_files_days` (7): uploaded documents from free checks are
+     deleted after this; the report is kept for `keep_days`.
+   - `email_buyer` and `reply_promise`: the confirmation email to the buyer
+     after payment, with their full report attached.
+5. **When the checking instructions change**, run
+   `dart run tool/export_prompt.dart` in the app's folder and upload
+   `server/bys/prompt/system.txt` and `version.txt` again. No app update is
+   needed.
+
+Check it works: `https://www.arpra.org.au/bys/prompt/system.txt` must show
+**Forbidden**, and `bys-data/bys.log` shows `check started` and `check done`
+lines for each check.
+
 ## 7. The app
 
 In Before You Sign → **Settings**:
@@ -201,7 +234,8 @@ In Before You Sign → **Settings**:
 - **Stripe Payment Link**: the sandbox link (`https://buy.stripe.com/test_…`)
 - **ARPRA server**: `https://www.arpra.org.au/bys`
 - **Server key**: the `app_key` from config.php
-- Save.
+- Save. With the server set, checks run on the server and the Claude API key
+  field in Settings is no longer used.
 
 If the ARPRA server is left blank, the app falls back to the old test-build
 flow (asks the buyer, emails from the phone).

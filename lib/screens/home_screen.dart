@@ -103,13 +103,13 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (!s.hasKey)
+            if (!s.canCheck)
               Card(
                 color: const Color(0xFFFFF4DE),
                 child: ListTile(
                   leading: const Icon(Icons.info_outline, color: kAmber),
                   title: const Text('Test build'),
-                  subtitle: const Text('Add the Claude API key in Settings to run real checks. You can try the sample report now.'),
+                  subtitle: const Text('Add the ARPRA server (or a Claude API key) in Settings to run real checks. You can try the sample report now.'),
                   onTap: () async {
                     await Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
                     setState(() {});

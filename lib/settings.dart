@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 /// Test-build settings. In the public version the API key will live on
 /// ARPRA's server, not on the phone.
@@ -12,6 +13,7 @@ class AppSettings {
   static const _kServer = 'server_url';
   static const _kServerKey = 'server_key';
   static const _kFull = 'full_report';
+  static const _kDevice = 'device_id';
 
   static const defaultModel = 'claude-opus-5-5';
   static const models = {
@@ -36,6 +38,9 @@ class AppSettings {
   /// behaviour (free summary; full report after paying for ARPRA's review).
   bool fullReport = true;
 
+  /// Random id for this install, so ARPRA's server can apply daily limits.
+  String deviceId = '';
+
   static final AppSettings instance = AppSettings();
 
   Future<void> load() async {
@@ -50,6 +55,11 @@ class AppSettings {
     serverUrl = p.getString(_kServer) ?? '';
     serverKey = p.getString(_kServerKey) ?? '';
     fullReport = p.getBool(_kFull) ?? true;
+    deviceId = p.getString(_kDevice) ?? '';
+    if (deviceId.isEmpty) {
+      deviceId = const Uuid().v4();
+      await p.setString(_kDevice, deviceId);
+    }
   }
 
   Future<void> save() async {
@@ -77,4 +87,8 @@ class AppSettings {
   }
 
   bool get hasKey => apiKey.trim().isNotEmpty;
+
+  /// Checks run on ARPRA's server when it is set; otherwise (testing) on the
+  /// phone with the key from Settings.
+  bool get canCheck => hasServer || hasKey;
 }

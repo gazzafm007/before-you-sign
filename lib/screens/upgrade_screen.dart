@@ -115,11 +115,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> with WidgetsBindingObserv
         ],
       ),
     );
-    if (done == true) {
-      c.fullUnlocked = true;
-      await CaseStore.save(c);
-      setState(() => _paid = true);
-    }
+    if (done == true) setState(() => _paid = true);
   }
 
   /// Checks with ARPRA's server every few seconds for up to 15 minutes.
@@ -161,10 +157,6 @@ class _UpgradeScreenState extends State<UpgradeScreen> with WidgetsBindingObserv
       if (!mounted) return;
       if (j['paid'] == true) {
         _poll?.cancel();
-        if (!c.fullUnlocked) {
-          c.fullUnlocked = true;
-          await CaseStore.save(c);
-        }
         setState(() {
           _paid = true;
           _waiting = false;
@@ -318,8 +310,8 @@ class _UpgradeScreenState extends State<UpgradeScreen> with WidgetsBindingObserv
           Text('Get ARPRA to review your documents', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           const Text(
-            'You get the full report straight away. An ARPRA adviser will also read your documents in full, check them '
-            'against the law, and send you written advice with the issues to raise before you sign. Your scanned documents and this report are sent '
+            'ARPRA emails you the full report, and an ARPRA adviser reads your documents in full, checks them '
+            'against the law, and sends you written advice with the issues to raise before you sign. Your scanned documents and this report are sent '
             'to ARPRA, so you do not need to post anything.',
           ),
           const SizedBox(height: 12),

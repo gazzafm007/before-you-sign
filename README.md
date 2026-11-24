@@ -45,7 +45,8 @@ The release build is signed with the debug key, which is fine for sideloading. U
 | `lib/report_pdf.dart` | PDF report, and scanned pages to PDF |
 | `lib/sample.dart` | Built-in sample report (fictional community) |
 | `lib/screens/` | Home, documents, progress, report, ARPRA review, settings |
-| `server/bys/` | PHP scripts for ARPRA's cPanel hosting: Stripe webhook, payment check, document upload, email to prepurchase@. Set-up: `server/SETUP.md` |
+| `server/bys/` | PHP scripts for ARPRA's cPanel hosting: the document check with ARPRA's Claude key (analyse/status), Stripe webhook, payment check, document upload, emails to prepurchase@ and the buyer. Set-up: `server/SETUP.md` |
+| `tool/export_prompt.dart` | Copies the checking instructions to `server/bys/prompt/` for the server |
 
 ## Plan
 

@@ -54,6 +54,7 @@ class Analyzer {
   /// [onProgress] receives the number of characters written so far.
   Future<Map<String, dynamic>> run(CheckCase c, {void Function(int chars)? onProgress}) async {
     final s = AppSettings.instance;
+    if (s.hasServer) return _runOnServer(c, onProgress);
     if (!s.hasKey) {
       throw AnalysisException('No Claude API key has been entered. Open Settings (the gear on the home screen) and paste your key.');
     }
@@ -194,6 +195,139 @@ class Analyzer {
     final report = parseReport(text.toString());
     report['_prompt_version'] = kPromptVersion;
     return report;
+  }
+
+  /// Uploads the documents to ARPRA's server, which runs the check with
+  /// ARPRA's key, then follows progress until the report is ready.
+  Future<Map<String, dynamic>> _runOnServer(CheckCase c, void Function(int chars)? onProgress) async {
+    final s = AppSettings.instance;
+    final plan = <Map<String, dynamic>>[];
+    final labels = <String>[];
+    final req = http.MultipartRequest('POST', s.serverUri('analyse.php'))
+      ..headers['X-BYS-Key'] = s.serverKey
+      ..fields['ref'] = c.reference
+      ..fields['device'] = s.deviceId;
+    var n = 0;
+    var bytes = 0;
+    var images = 0;
+    for (final d in c.docs) {
+      if (d.isEmpty) continue;
+      var pageNo = 0;
+      for (final f in d.files) {
+        n++;
+        bytes += await File(f.path).length();
+        final name = 'f${n.toString().padLeft(3, '0')}.${f.isPdf ? 'pdf' : 'jpg'}';
+        if (f.isPdf) {
+          plan.add({'type': 'text', 'text': '=== ${d.kind.title} (PDF: ${f.name}) ==='});
+          plan.add({'type': 'file', 'file': name, 'media': 'application/pdf', 'title': '${d.kind.title} - ${f.name}'});
+          labels.add('${d.kind.title}: PDF file ${f.name}');
+        } else {
+          pageNo++;
+          images++;
+          plan.add({'type': 'text', 'text': '=== ${d.kind.title} — photographed page $pageNo ==='});
+          plan.add({'type': 'file', 'file': name, 'media': 'image/jpeg'});
+        }
+        req.files.add(await http.MultipartFile.fromPath('files[]', f.path, filename: name));
+      }
+      if (d.photoCount > 0) labels.add('${d.kind.title}: ${d.photoCount} photographed page(s)');
+    }
+    if (plan.isEmpty) throw AnalysisException('Please add at least one document first.');
+    if (images > 100) {
+      throw AnalysisException('That is $images photographed pages; the limit for one check is 100. If you have the documents as PDFs, add those instead.');
+    }
+    if (bytes > 60 * 1024 * 1024) {
+      throw AnalysisException('The documents are too large to send in one go (${(bytes / 1048576).toStringAsFixed(1)} MB). Try adding PDFs instead of photos, or remove duplicate pages.');
+    }
+    plan.add({
+      'type': 'text',
+      'text': buildUserInstruction(
+        today: DateFormat('d MMMM yyyy').format(c.asAt ?? DateTime.now()),
+        asAtTest: c.asAt != null,
+        community: c.community,
+        site: c.site,
+        buyer: c.buyer,
+        notes: c.notes,
+        docLabels: labels,
+      ),
+    });
+    req.fields['plan'] = jsonEncode(plan);
+
+    _cancelled = false;
+    _client = http.Client();
+    final client = _client!;
+    http.Response? posted;
+    Object? postError;
+    // The upload; on some hosts the server only answers once the check is
+    // done, so progress is followed separately with status.php.
+    unawaited(client
+        .send(req)
+        .timeout(const Duration(minutes: 15))
+        .then(http.Response.fromStream)
+        .then((r) => posted = r, onError: (Object e) => postError = e));
+
+    final started = DateTime.now();
+    var seen = false;
+    var failures = 0;
+    try {
+      while (true) {
+        if (_cancelled) throw AnalysisException('Check cancelled.');
+        final p = posted;
+        if (p != null && p.statusCode != 200) {
+          String msg = 'The check could not be started (error ${p.statusCode}).';
+          try {
+            msg = (jsonDecode(p.body)['error'] ?? msg).toString();
+          } catch (_) {
+            if (p.statusCode == 403) msg = 'ARPRA\'s server did not accept this app (error 403). Check the server key in Settings.';
+          }
+          throw AnalysisException(msg);
+        }
+        if (postError != null && !seen) {
+          throw AnalysisException('Could not send your documents to ARPRA. Check your internet connection and try again.');
+        }
+        if (DateTime.now().difference(started) > const Duration(minutes: 15)) {
+          throw AnalysisException('The check took too long. Please try again, or call ARPRA on 1300 798 399.');
+        }
+        await Future<void>.delayed(const Duration(seconds: 4));
+        http.Response r;
+        try {
+          r = await client.get(s.serverUri('status.php', {'ref': c.reference}), headers: {
+            'X-BYS-Key': s.serverKey,
+            'X-BYS-Device': s.deviceId,
+          }).timeout(const Duration(seconds: 25));
+          failures = 0;
+        } catch (_) {
+          if (_cancelled) throw AnalysisException('Check cancelled.');
+          if (++failures > 15) {
+            throw AnalysisException('Lost contact with ARPRA\'s server. Check your internet connection and try again.');
+          }
+          continue;
+        }
+        if (r.statusCode == 404) continue; // still uploading
+        Map<String, dynamic> j;
+        try {
+          j = jsonDecode(r.body) as Map<String, dynamic>;
+        } catch (_) {
+          continue;
+        }
+        if (r.statusCode != 200) {
+          throw AnalysisException((j['error'] ?? 'The check could not be completed (error ${r.statusCode}).').toString());
+        }
+        seen = true;
+        final chars = (j['chars'] as num?)?.toInt() ?? 0;
+        if (chars > 0) onProgress?.call(chars);
+        switch (j['status']) {
+          case 'done':
+            final rep = j['report'];
+            if (rep is! Map) throw AnalysisException('The report could not be read. Please try again.');
+            return Map<String, dynamic>.from(rep);
+          case 'error':
+            throw AnalysisException((j['error'] ?? 'The check could not be completed.').toString());
+        }
+      }
+    } finally {
+      client.close();
+      _client = null;
+    }
   }
 
   static Map<String, dynamic> parseReport(String raw) {

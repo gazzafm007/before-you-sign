@@ -20,6 +20,33 @@ return [
     // any Checkout payment that carries a BYS- reference.
     'payment_link_ids' => [],
 
+    // ---- The document check (runs here, so the key never goes on phones) ----
+    // Claude API key from the "Before You Sign" workspace in the Claude
+    // Console (set a monthly spend limit on that workspace).
+    'anthropic_api_key' => 'REPLACE_ME',
+    'claude_model' => 'claude-opus-5-5',
+    'claude_max_tokens' => 32000,
+
+    // What the app shows after a check: 'summary' (the public version: rating,
+    // top issues, key dates, items that may conflict with the law, counts) or
+    // 'full' (for ARPRA testing). The full report always goes to ARPRA, and to
+    // the buyer by email, when they pay for the review.
+    'report_to_app' => 'summary',
+
+    // Limits that protect ARPRA's Claude bill. 0 = no limit.
+    'max_checks_per_device_per_day' => 3,
+    'max_checks_per_day' => 50,
+
+    // Free checks: days to keep the uploaded documents (reports are kept for
+    // keep_days below, in case the buyer asks ARPRA to review).
+    'keep_check_files_days' => 7,
+
+    // ---- After payment ----
+    // Email the buyer a confirmation with their full report attached.
+    'email_buyer' => true,
+    // How soon the buyer will hear from an adviser (used in that email).
+    'reply_promise' => 'within 3 business days',
+
     // Shared key the app sends with every request (Settings → "Server key" in
     // the app). Make one up: 30+ random letters and numbers.
     'app_key' => 'REPLACE_WITH_A_LONG_RANDOM_KEY',

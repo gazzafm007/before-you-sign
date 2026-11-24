@@ -2,6 +2,6 @@
 Options -Indexes
 
 # Never serve the settings or helper files.
-<FilesMatch "^(config.*\.php|lib\.php|retry\.php|\.user\.ini)$">
+<FilesMatch "^(config.*\.php|lib\.php|check_lib\.php|retry\.php|\.user\.ini)$">
     Require all denied
 </FilesMatch>

@@ -110,10 +110,16 @@ function bys_deliver_if_ready(string $ref): bool
         if (is_file($dir . '/emailed.json')) {
             return true;
         }
-        $ok = bys_send_request_email($ref, $meta, $pay, $dir);
+        $reportHtml = bys_full_report_file($ref, $dir);
+        $ok = bys_send_request_email($ref, $meta, $pay, $dir, $reportHtml);
         if ($ok) {
-            bys_write_json($dir . '/emailed.json', ['emailed_at' => date('c'), 'to' => bys_config()['mail_to']]);
-            bys_log("$ref emailed to " . bys_config()['mail_to']);
+            $buyer = bys_send_buyer_email($ref, $meta, $reportHtml);
+            bys_write_json($dir . '/emailed.json', [
+                'emailed_at' => date('c'),
+                'to' => bys_config()['mail_to'],
+                'buyer_emailed' => $buyer,
+            ]);
+            bys_log("$ref emailed to " . bys_config()['mail_to'] . ($buyer ? ' and the buyer' : ''));
         } else {
             bys_log("$ref email FAILED");
         }
@@ -124,7 +130,78 @@ function bys_deliver_if_ready(string $ref): bool
     }
 }
 
-function bys_send_request_email(string $ref, array $meta, array $pay, string $dir): bool
+/**
+ * When the check ran on this server, writes the full report as an HTML file
+ * for the emails. Returns its path, or null for checks run on the phone.
+ */
+function bys_full_report_file(string $ref, string $dir): ?string
+{
+    $checkLib = __DIR__ . '/check_lib.php';
+    if (!is_file($checkLib)) {
+        return null;
+    }
+    require_once $checkLib;
+    $report = bys_read_json(bys_check_dir($ref) . '/report.json');
+    if ($report === null) {
+        return null;
+    }
+    $path = $dir . '/' . $ref . '_full_report.html';
+    file_put_contents($path, bys_report_html($report, $ref));
+    return $path;
+}
+
+/** Confirms the request to the buyer, with the full report attached. */
+function bys_send_buyer_email(string $ref, array $meta, ?string $reportHtml): bool
+{
+    $cfg = bys_config();
+    if (empty($cfg['email_buyer'])) {
+        return false;
+    }
+    $to = trim(preg_replace('/[\r\n]+/', ' ', (string) ($meta['contact']['email'] ?? '')));
+    if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    $name = trim(preg_replace('/[\r\n]+/', ' ', (string) ($meta['contact']['name'] ?? '')));
+    $lines = [
+        'Dear ' . ($name !== '' ? $name : 'home buyer') . ',',
+        '',
+        'Thank you. ARPRA has received your request for a pre-purchase review and your payment.',
+        '',
+        'Your reference: ' . $ref,
+        'Community / site: ' . trim(preg_replace('/[\r\n]+/', ' ', (string) ($meta['title'] ?? ''))),
+        '',
+        'What happens next',
+        '- An ARPRA adviser will read your documents and contact you ' . ($cfg['reply_promise'] ?? 'within 3 business days') . '.',
+        '- Please do not sign anything until you have heard from us, if you can.',
+        '- Your 12 months\' ARPRA membership is included.',
+        '',
+    ];
+    if ($reportHtml !== null) {
+        $lines[] = 'Your full Before You Sign report is attached. Open it in your web browser or email app.';
+        $lines[] = 'It is an automated first check; your adviser will go through it with you.';
+        $lines[] = '';
+    }
+    $lines[] = 'If you have questions, reply to this email or call ARPRA on 1300 798 399 and quote ' . $ref . '.';
+    $lines[] = '';
+    $lines[] = 'ARPRA Limited';
+    $lines[] = 'Representing Residential Land Lease Communities';
+    $body = implode("\r\n", $lines);
+    $subject = 'Your ARPRA pre-purchase review – ' . $ref;
+    $files = $reportHtml !== null ? [$reportHtml] : [];
+    $replyTo = (string) ($cfg['mail_to'] ?? '');
+    try {
+        if (($cfg['mail_method'] ?? 'php') === 'graph') {
+            bys_graph_send($to, $subject, $body, $files, $replyTo);
+            return true;
+        }
+        return bys_php_mail($to, $subject, $body, $files, $replyTo);
+    } catch (Throwable $e) {
+        bys_log("$ref buyer email failed: " . $e->getMessage());
+        return false;
+    }
+}
+
+function bys_send_request_email(string $ref, array $meta, array $pay, string $dir, ?string $reportHtml = null): bool
 {
     $cfg = bys_config();
     $graph = ($cfg['mail_method'] ?? 'php') === 'graph';
@@ -138,6 +215,15 @@ function bys_send_request_email(string $ref, array $meta, array $pay, string $di
         $p = $dir . '/files/' . basename($name);
         if (is_file($p)) {
             $files[] = $p;
+        }
+    }
+    if ($reportHtml !== null) {
+        array_unshift($files, $reportHtml);
+        $serverJson = bys_check_dir($ref) . '/report.json';
+        if (is_file($serverJson)) {
+            $copy = $dir . '/' . $ref . '_full_report_data.json';
+            copy($serverJson, $copy);
+            $files[] = $copy;
         }
     }
     $total = 0;
@@ -168,7 +254,9 @@ function bys_send_request_email(string $ref, array $meta, array $pay, string $di
         '',
     ];
     if ($attach) {
-        $lines[] = 'Attached: the app report (PDF), each document, and the case data (JSON).';
+        $lines[] = $reportHtml !== null
+            ? 'Attached: the FULL report (HTML, open in a browser), the report the buyer saw (PDF), each document, and the case data (JSON).'
+            : 'Attached: the app report (PDF), each document, and the case data (JSON).';
     } else {
         $lines[] = 'The documents were too large to attach (' . round($total / 1048576, 1) . ' MB).';
         $lines[] = 'They are on the web server in bys-data/requests/' . $ref . '/files/';
@@ -231,7 +319,14 @@ function bys_php_mail(string $to, string $subject, string $body, array $files, s
 
 function bys_mime(string $name): string
 {
-    return strtolower(substr($name, -5)) === '.json' ? 'application/json' : 'application/pdf';
+    $n = strtolower($name);
+    if (substr($n, -5) === '.json') {
+        return 'application/json';
+    }
+    if (substr($n, -5) === '.html') {
+        return 'text/html';
+    }
+    return 'application/pdf';
 }
 
 // ---------------------------------------------------------------------------

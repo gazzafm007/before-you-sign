@@ -161,8 +161,8 @@ class _CheckScreenState extends State<CheckScreen> {
   Future<void> _run() async {
     await _persist();
     if (!mounted) return;
-    if (!AppSettings.instance.hasKey) {
-      _snack('Add the Claude API key in Settings first (test build).');
+    if (!AppSettings.instance.canCheck) {
+      _snack('Add the ARPRA server (or, for testing, a Claude API key) in Settings first.');
       return;
     }
     if (c.doc(DocKind.disclosure).isEmpty ||

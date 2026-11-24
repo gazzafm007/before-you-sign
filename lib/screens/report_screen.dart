@@ -625,7 +625,10 @@ class _ReportScreenState extends State<ReportScreen> {
           .where((e) => _s((e as Map)['status']) != 'ok')
           .length;
 
-  bool get _full => AppSettings.instance.fullReport || c.fullUnlocked;
+  /// The full report is shown only for testing (Settings) and only when the
+  /// phone has it: a summary from ARPRA's server never contains it. Buyers who
+  /// pay receive the full report from ARPRA by email (Google Play rules).
+  bool get _full => (c.report?['_summary_only'] != true) && AppSettings.instance.fullReport;
 
   /// The free version: the law conflicts by title, and what the full report adds.
   List<Widget> _freeSummary(Map r) {
@@ -714,9 +717,9 @@ class _ReportScreenState extends State<ReportScreen> {
             ...sum.lines.map(_bullet),
             const SizedBox(height: 10),
             const Text(
-              'The full report comes with ARPRA\'s pre-purchase review: an ARPRA adviser checks it against your '
-              'documents, explains what matters for you, and can raise the issues with the operator. '
-              'It includes 12 months\' ARPRA membership.',
+              'The full report comes with ARPRA\'s pre-purchase review. ARPRA emails it to you, and an ARPRA '
+              'adviser checks it against your documents, explains what matters for you, and can raise the '
+              'issues with the operator. It includes 12 months\' ARPRA membership.',
             ),
             const SizedBox(height: 12),
             FilledButton.icon(

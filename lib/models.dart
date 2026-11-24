@@ -37,6 +37,13 @@ class ReportSummary {
 
   factory ReportSummary.of(Map r) {
     List<Map> l(dynamic v) => v is List ? v.whereType<Map>().toList() : <Map>[];
+    // A summary from ARPRA's server carries the counts ready-made.
+    final k = r['_counts'];
+    if (r['_summary_only'] == true && k is Map) {
+      int n(String key) => (k[key] as num?)?.toInt() ?? 0;
+      return ReportSummary._(l(r['red']), n('more_items'), n('unfair_terms'), n('unclear'), n('know'), n('blanks'),
+          n('tick_problems'), n('term_changes'), n('questions'));
+    }
     final red = l(r['red']);
     final amber = l(r['amber']);
     final items = [...red, ...amber];
