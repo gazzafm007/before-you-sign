@@ -2,13 +2,13 @@
 // The app follows a check: GET status.php?ref=BYS-1A2B3C4D (header X-BYS-Key).
 // Reply: {"status":"queued"|"running"|"done"|"error","chars":n,"error":…,"report":{…}}
 // When done, "report" is the full report or the free summary, depending on
-// report_to_app in config.php.
+// report_to_app in config.php. Website checks always get the free summary.
 
 define('BYS', 1);
 require __DIR__ . '/lib.php';
 require __DIR__ . '/check_lib.php';
 
-bys_require_app_key();
+bys_web_headers();
 $ref = bys_ref($_GET['ref'] ?? '');
 if ($ref === null) {
     bys_json(400, ['error' => 'Bad reference']);
@@ -18,7 +18,8 @@ if ($job === null) {
     bys_json(404, ['status' => 'missing', 'error' => 'No check found for this reference.']);
 }
 $device = preg_replace('/[^A-Za-z0-9-]/', '', (string) ($_SERVER['HTTP_X_BYS_DEVICE'] ?? ''));
-if ($device === '' || !hash_equals((string) ($job['device'] ?? ''), $device)) {
+if ($device === '' || !hash_equals((string) ($job['device'] ?? ''), $device)
+    || (!bys_has_app_key() && !bys_is_web_device($device))) {
     bys_json(403, ['error' => 'Not allowed.']);
 }
 
@@ -49,7 +50,8 @@ if ($status === 'done') {
     if ($report === null) {
         bys_json(500, ['status' => 'error', 'error' => 'The report could not be read. Please try again.']);
     }
-    $full = (bys_config()['report_to_app'] ?? 'summary') === 'full';
+    // The website always gets the free summary; the full report goes by email after payment.
+    $full = !bys_is_web_device($device) && (bys_config()['report_to_app'] ?? 'summary') === 'full';
     $out['report'] = $full ? $report : bys_report_summary($report);
 }
 bys_json(200, $out);

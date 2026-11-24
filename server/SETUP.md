@@ -227,6 +227,36 @@ Check it works: `https://www.arpra.org.au/bys/prompt/system.txt` must show
 **Forbidden**, and `bys-data/bys.log` shows `check started` and `check done`
 lines for each check.
 
+## 6d. The online check on the website
+
+`before-you-sign-online.html` (in the v2 website folder) lets people check
+their documents in a web browser, without the app. It uses the same server
+and the same Claude key. The website always gets the free summary; the full
+report goes to ARPRA and to the buyer by email after payment.
+
+1. Upload `web-config.php` and `web-request.php`, and re-upload `analyse.php`,
+   `status.php`, `check.php`, `lib.php`, `check_lib.php` and `thanks.html`.
+2. **Robot check (free).** In Cloudflare, open **Turnstile → Add widget**,
+   name it "Before You Sign", add the hostnames `arpra.org.au` and
+   `www.arpra.org.au`, mode **Managed**. Copy the **Site key** and
+   **Secret key** into `config.php` as `turnstile_sitekey` and
+   `turnstile_secret`. This stops automated scripts running up the Claude bill.
+3. In `config.php` set:
+   - `web_payment_link`: the Stripe Payment Link for the review (the same
+     link as the app is fine; the website adds the BYS reference to it).
+   - `web_fee_text`: the price line shown above the payment button.
+   - `max_checks_per_ip_per_day` (3): checks from one internet connection a
+     day. A retirement village sharing one connection may need more.
+   - `web_enabled => true` to switch it on. Until then the page says
+     "coming soon".
+4. Upload the website files: `before-you-sign-online.html`,
+   `assets/bys-online.css`, `assets/bys-online.js`.
+
+Check it works: open `https://www.arpra.org.au/bys/web-config.php`; it should
+show `"enabled":true`. Then run a check with a sample document, and pay with
+the Stripe test card. `bys.log` shows "review request received from the
+website".
+
 ## 7. The app
 
 In Before You Sign → **Settings**:

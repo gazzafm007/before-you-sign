@@ -53,6 +53,46 @@ function bys_ref($v): ?string
     return preg_match('/^BYS-[A-F0-9]{8}$/', $v) ? $v : null;
 }
 
+/**
+ * Lets ARPRA's website call these scripts when it is on another address
+ * (web_origins in config.php), and answers the browser's pre-flight check.
+ */
+function bys_web_headers(): void
+{
+    $origin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
+    $allowed = bys_config()['web_origins'] ?? [];
+    if ($origin !== '' && in_array($origin, $allowed, true)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Vary: Origin');
+        header('Access-Control-Allow-Headers: X-BYS-Device, Content-Type');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        header('Access-Control-Max-Age: 600');
+    }
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+        http_response_code(204);
+        exit;
+    }
+}
+
+/** A device id made by the website: "web-" and 32 random hex characters. */
+function bys_is_web_device(string $d): bool
+{
+    return (bool) preg_match('/^web-[a-f0-9]{32}$/', $d);
+}
+
+/** True when the request carries the app's shared key. */
+function bys_has_app_key(): bool
+{
+    $sent = (string) ($_SERVER['HTTP_X_BYS_KEY'] ?? '');
+    $key = (string) bys_config()['app_key'];
+    return $sent !== '' && $key !== '' && strpos($key, 'REPLACE') === false && hash_equals($key, $sent);
+}
+
+function bys_client_ip(): string
+{
+    return (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+}
+
 /** Rejects requests that do not carry the app's shared key. */
 function bys_require_app_key(): void
 {
@@ -266,7 +306,8 @@ function bys_send_request_email(string $ref, array $meta, array $pay, string $di
         }
     }
     $lines[] = '';
-    $lines[] = 'Received from the Before You Sign app on ' . ($meta['received_at'] ?? date('c')) . '.';
+    $lines[] = 'Received from the Before You Sign ' . (($meta['source'] ?? '') === 'website' ? 'website' : 'app')
+        . ' on ' . ($meta['received_at'] ?? date('c')) . '.';
     $body = implode("\r\n", $lines);
     $subject = 'Pre-purchase review request ' . $ref . ' – ' . $clean($meta['title'] ?? '');
     $replyTo = $clean($contact['email'] ?? '');
@@ -320,6 +361,9 @@ function bys_php_mail(string $to, string $subject, string $body, array $files, s
 function bys_mime(string $name): string
 {
     $n = strtolower($name);
+    if (substr($n, -4) === '.jpg' || substr($n, -5) === '.jpeg') {
+        return 'image/jpeg';
+    }
     if (substr($n, -5) === '.json') {
         return 'application/json';
     }

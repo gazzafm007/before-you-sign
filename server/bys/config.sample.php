@@ -41,6 +41,20 @@ return [
     // keep_days below, in case the buyer asks ARPRA to review).
     'keep_check_files_days' => 7,
 
+    // ---- The website version (before-you-sign-online.html) ----
+    // Off until ARPRA is ready. The website cannot keep a secret, so it is
+    // protected by Cloudflare Turnstile (free: dash.cloudflare.com → Turnstile
+    // → add a widget for www.arpra.org.au) and by limits per connection.
+    'web_enabled' => false,
+    'turnstile_sitekey' => '',   // shown to the browser
+    'turnstile_secret' => '',    // stays here; empty = no robot check (testing only)
+    'max_checks_per_ip_per_day' => 3,
+    'web_payment_link' => '',    // the Stripe Payment Link (same as the app's)
+    'web_fee_text' => '$195, including 12 months\' ARPRA membership',
+    // Website addresses allowed to call these scripts from another address
+    // (needed once the scripts move off www.arpra.org.au, e.g. to Azure).
+    'web_origins' => ['https://www.arpra.org.au', 'https://arpra.org.au'],
+
     // ---- After payment ----
     // Email the buyer a confirmation with their full report attached.
     'email_buyer' => true,

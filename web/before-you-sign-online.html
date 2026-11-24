@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Before You Sign — check online | ARPRA</title>
+<meta name="description" content="Check your NSW land lease community paperwork online before you sign: a free plain-English summary from ARPRA, with an optional paid review by an ARPRA adviser.">
+<meta name="theme-color" content="#0B1F3F">
+<link rel="icon" href="images/favicon.png">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/bys-online.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<div class="topstrip">
+  <div class="wrap">
+    <span class="tag">NSW's peak body for land lease community residents — since 1986</span>
+    <div class="textsize" role="group" aria-label="Text size">
+      <span>Text size</span>
+      <button type="button" class="t1" data-size="md" aria-pressed="true" aria-label="Standard text">A</button>
+      <button type="button" class="t2" data-size="lg" aria-pressed="false" aria-label="Larger text">A</button>
+      <button type="button" class="t3" data-size="xl" aria-pressed="false" aria-label="Largest text">A</button>
+    </div>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="brand" href="index.html"><img src="images/arpra-logo.png" alt="ARPRA Ltd — Representing Residential Land Lease Communities — home page" width="293" height="67"></a>
+    <div class="header-actions">
+      <div class="callbox"><span>Call us 9am–4pm weekdays</span><a href="tel:1300798399">1300 798 399</a></div>
+      <a class="btn btn-blue btn-sm btn-login-desk" href="members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h5v16h-5M10 8l4 4-4 4M14 12H3"/></svg>Member login</a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span class="label">Menu</span></button>
+    </div>
+  </div>
+  <nav class="main-nav" id="main-nav" aria-label="Main">
+    <ul><li><a href="index.html">Home</a></li><li><a href="residents.html">Living in a community</a></li><li><a href="buying.html" aria-current="page">Thinking of buying</a></li><li><a href="membership.html">Join or renew</a></li><li><a href="services.html">How we help</a></li><li><a href="resources.html">Resources</a></li><li><a href="about.html">About us</a></li><li><a href="contact.html">Contact</a></li><li class="nav-mobile-only"><a href="members.html">Member login</a></li></ul>
+  </nav>
+</header>
+
+<main id="main">
+<section class="page-hero"><div class="wrap"><div class="crumbs"><a href="index.html">Home</a> › <a href="buying.html">Thinking of buying</a> › Before You Sign online</div><span class="eyebrow">Free online check</span><h1>Before You Sign — check online</h1><p class="lead">Upload your land lease paperwork and get a free plain-English summary of what to look at before you sign. No app needed.</p></div></section>
+
+<section><div class="wrap">
+  <div class="notice bys-noprint" id="bys-off" hidden><strong>The online check is coming soon.</strong> In the meantime, call us on <a href="tel:1300798399">1300 798 399</a> or use the <a href="before-you-sign.html">Before You Sign app</a>.</div>
+
+  <!-- Step 1: documents -->
+  <div class="bys-step bys-step-upload" id="bys-step-upload">
+    <h2>1. Add your documents</h2>
+    <p>Add each document you have been given, as PDF files or photos of the pages. You don't need all four — add what you have. On a phone, "Add photos" lets you use the camera.</p>
+    <div class="bys-docs" id="bys-docs"></div>
+    <p class="small muted">Up to 100 photographed pages in total. Photograph every page, including the back of double-sided sheets, in order.</p>
+
+    <h2 style="margin-top:32px">2. A few details (optional)</h2>
+    <div class="bys-row2">
+      <div class="bys-field"><label for="bys-community">Community name</label><input type="text" id="bys-community" autocomplete="off"></div>
+      <div class="bys-field"><label for="bys-site">Site number</label><input type="text" id="bys-site" autocomplete="off"></div>
+    </div>
+    <div class="bys-field"><label for="bys-notes">Anything we should know? <span class="hint">For example: "the home isn't built yet" or "I have a dog".</span></label><textarea id="bys-notes"></textarea></div>
+
+    <h2 style="margin-top:32px">3. Check my documents</h2>
+    <div class="bys-consent">
+      <input type="checkbox" id="bys-consent">
+      <label for="bys-consent">I understand this is a free automated first check, not legal advice, and that my documents are sent to ARPRA and to our AI provider to prepare it. See our <a href="privacy.html">privacy policy</a> and <a href="terms.html">terms</a>.</label>
+    </div>
+    <div id="bys-turnstile" style="margin:0 0 18px"></div>
+    <div class="bys-error" id="bys-upload-error" role="alert" hidden></div>
+    <div class="btn-row"><button type="button" class="btn btn-gold" id="bys-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>Check my documents</button></div>
+  </div>
+
+  <!-- Working -->
+  <div class="bys-step" id="bys-step-working" hidden>
+    <div class="bys-progress" role="status" aria-live="polite">
+      <div class="bys-spinner" aria-hidden="true"></div>
+      <div><h2 style="margin:0 0 4px">Checking your documents…</h2><p style="margin:0" id="bys-progress-text">Sending your documents securely to ARPRA.</p><p class="small muted" style="margin:6px 0 0">This usually takes two to four minutes. Please keep this page open.</p></div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="bys-step" id="bys-step-result" hidden>
+    <p class="small muted">Reference <span class="bys-ref" id="bys-ref"></span> · <span id="bys-title"></span></p>
+    <div class="bys-rating" id="bys-rating"><div><div class="label">Overall</div><div class="value" id="bys-rating-value"></div></div><div id="bys-rating-reason"></div></div>
+    <p id="bys-summary"></p>
+
+    <div id="bys-top-wrap"><h2>The things that matter most</h2><ol class="bys-top" id="bys-top"></ol></div>
+    <div id="bys-dates-wrap"><h2>Key dates</h2><table class="bys-dates"><thead><tr><th scope="col">Date</th><th scope="col">What</th></tr></thead><tbody id="bys-dates"></tbody></table></div>
+    <div id="bys-law-wrap" style="margin-top:28px"><h2>May conflict with the law</h2><p>Ask the operator about these before you sign. The full report explains each one.</p><ul class="bys-law" id="bys-law"></ul></div>
+
+    <div class="bys-locked" style="margin-top:28px">
+      <h2>Your full report</h2>
+      <p style="margin:0">The check also found:</p>
+      <ul id="bys-more"></ul>
+      <p>The full report comes with ARPRA's pre-purchase review. ARPRA emails it to you, and an ARPRA adviser checks it against your documents, explains what matters for you, and can raise the issues with the operator. It includes 12 months' ARPRA membership.</p>
+      <div class="btn-row"><a class="btn btn-gold" href="#bys-step-review" id="bys-want-review">Get ARPRA to review this</a><button type="button" class="btn btn-white" onclick="window.print()">Print this summary</button></div>
+    </div>
+    <p class="small muted" style="margin-top:18px">This is an automated first check and is not legal or financial advice. It can miss things or misread a page. Talk to ARPRA or a solicitor before you sign.</p>
+  </div>
+
+  <!-- Review request -->
+  <div class="bys-step bys-step-review" id="bys-step-review" hidden>
+    <h2>Get ARPRA to review this</h2>
+    <p><strong id="bys-fee"></strong></p>
+    <p>An ARPRA adviser reads your documents, checks them against the law, and sends you written advice with the issues to raise before you sign. We'll be in touch <span id="bys-reply"></span>. Your documents from the check above are sent to ARPRA — you don't need to add them again.</p>
+    <div class="bys-row2">
+      <div class="bys-field"><label for="bys-name">Your name(s)</label><input type="text" id="bys-name" autocomplete="name"></div>
+      <div class="bys-field"><label for="bys-email">Email</label><input type="email" id="bys-email" autocomplete="email"></div>
+      <div class="bys-field"><label for="bys-phone">Phone</label><input type="tel" id="bys-phone" autocomplete="tel"></div>
+      <div class="bys-field"><label for="bys-when">When are you planning to sign? <span class="hint">Optional</span></label><input type="text" id="bys-when"></div>
+    </div>
+    <div class="bys-error" id="bys-review-error" role="alert" hidden></div>
+    <div class="btn-row"><button type="button" class="btn btn-gold" id="bys-pay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Pay securely with card</button></div>
+    <p class="small muted">Payment is handled by Stripe in a new window. See our <a href="refunds.html">refunds &amp; cancellations policy</a>.</p>
+    <div class="bys-progress" id="bys-paying" role="status" aria-live="polite" hidden style="margin-top:18px">
+      <div class="bys-spinner" aria-hidden="true"></div>
+      <div><strong>Waiting for your payment to be confirmed…</strong><p class="small" style="margin:4px 0 0">Finish paying in the Stripe window. This page updates by itself.</p></div>
+    </div>
+  </div>
+
+  <!-- Sent -->
+  <div class="bys-step" id="bys-step-sent" hidden>
+    <div class="notice"><h2 style="margin:0 0 6px">Thank you — your request is with ARPRA</h2><p style="margin:0">Your reference is <span class="bys-ref" id="bys-sent-ref"></span>. We have emailed you a confirmation with your full report. An adviser will contact you <span id="bys-sent-reply"></span>.</p></div>
+  </div>
+
+  <p class="bys-noprint" style="margin-top:26px"><button type="button" class="btn btn-line btn-sm" id="bys-restart" hidden>Start a new check</button></p>
+</div></section>
+
+<section class="section-mist bys-noprint"><div class="wrap grid-2">
+  <div>
+    <h2>Prefer the app?</h2>
+    <p>The free <a href="before-you-sign.html">Before You Sign app</a> does the same check and is best for paper documents: its scanner straightens and sharpens each page.</p>
+  </div>
+  <div class="card">
+    <h3>Your documents</h3>
+    <p>Your documents are sent securely to ARPRA and to our AI provider to prepare the check. Documents from free checks are deleted after 7 days. See our <a href="privacy.html">privacy policy</a>.</p>
+  </div>
+</div></section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <h2>ARPRA Ltd</h2>
+        <p>The independent, not-for-profit voice for people who live in Residential Land Lease Communities across New South Wales.</p>
+        <p>PO Box 4063, Forster NSW 2428</p>
+        <div class="social">
+          <a href="https://www.facebook.com/arpransw">Facebook</a>
+          <a href="https://www.youtube.com/user/ARPRANSW">YouTube</a>
+        </div>
+      </div>
+      <div>
+        <h2>For residents</h2>
+        <ul>
+          <li><a href="residents.html">Living in a community</a></li>
+          <li><a href="buying.html">Thinking of buying</a></li>
+          <li><a href="membership.html">Join or renew</a></li>
+          <li><a href="members.html">Member Centre &amp; login</a></li>
+          <li><a href="app.html">Get the ARPRA app</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>About ARPRA</h2>
+        <ul>
+          <li><a href="about.html">Who we are</a></li>
+          <li><a href="services.html">How we help</a></li>
+          <li><a href="advocacy.html">Advocacy &amp; lobbying</a></li>
+          <li><a href="professionals.html">Professional membership</a></li>
+          <li><a href="resources.html">Fact sheets &amp; podcast</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Contact</h2>
+        <ul>
+          <li><a href="tel:1300798399">1300 798 399</a></li>
+          <li>9am–4pm, Monday to Friday</li>
+          <li><a href="mailto:membership@arpra.org.au">membership@arpra.org.au</a></li>
+          <li><a href="contact.html">All contact options</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-ack">ARPRA acknowledges the Traditional Custodians of the lands on which our members live, and pays respect to Elders past and present.</p>
+    <div class="footer-bottom">
+      <nav aria-label="Policies">
+        <a href="privacy.html">Privacy</a><a href="refunds.html">Refunds &amp; cancellations</a><a href="terms.html">Website terms &amp; disclaimer</a><a href="complaints.html">Complaints &amp; feedback</a><a href="accessibility.html">Accessibility</a><a href="policies.html">All policies</a>
+      </nav>
+      <div>© 2005–<span class="year">2026</span> ARPRA Limited</div>
+    </div>
+  </div>
+</footer>
+
+<nav class="mobile-bar" aria-label="Quick actions">
+  <a href="tel:1300798399"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 005 5L15 12l5 2v4a2 2 0 01-2 2A16 16 0 013 5a2 2 0 012-2z"/></svg>Call us</a>
+  <a class="primary" href="membership.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M19 8v6M16 11h6"/></svg>Join</a>
+  <a href="members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h5v16h-5M10 8l4 4-4 4M14 12H3"/></svg>Member login</a>
+</nav>
+
+<script src="assets/site.js"></script>
+<script src="assets/bys-online.js"></script>
+</body>
+</html>

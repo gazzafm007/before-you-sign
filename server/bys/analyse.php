@@ -15,11 +15,19 @@ define('BYS', 1);
 require __DIR__ . '/lib.php';
 require __DIR__ . '/check_lib.php';
 
+bys_web_headers();
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     bys_json(405, ['error' => 'POST only']);
 }
-bys_require_app_key();
 $cfg = bys_config();
+// The app proves itself with the shared key; the website (which cannot keep
+// a secret) with a web device id and Cloudflare Turnstile.
+$fromApp = bys_has_app_key();
+if (!$fromApp) {
+    if (empty($cfg['web_enabled']) || !bys_is_web_device((string) ($_POST['device'] ?? ''))) {
+        bys_json(403, ['error' => 'Not allowed.']);
+    }
+}
 
 if (empty($_POST) && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
     bys_json(413, ['error' => 'The documents are too large to send in one go. Try PDFs instead of photos, or remove duplicate pages.']);
@@ -89,7 +97,23 @@ if ($images > 100) {
     bys_json(400, ['error' => "That is $images photographed pages; the limit for one check is 100. If you have the documents as PDFs, add those instead."]);
 }
 
-$limit = bys_rate_ok($device);
+if (!$fromApp && !bys_turnstile_ok((string) ($_POST['turnstile'] ?? ''))) {
+    bys_json(403, ['error' => 'Please tick the "I am human" check again, then try once more.']);
+}
+// The website sends the buyer's details; the server writes the closing
+// instruction (the app sends its own).
+$details = json_decode((string) ($_POST['details'] ?? ''), true);
+if (is_array($details)) {
+    $labels = [];
+    foreach ($plan as $p) {
+        if (($p['type'] ?? '') === 'file' && !empty($p['label'])) {
+            $labels[] = (string) $p['label'];
+        }
+    }
+    $plan[] = ['type' => 'text', 'text' => bys_build_instruction($details, $labels)];
+}
+
+$limit = bys_rate_ok($device, $fromApp ? '' : bys_client_ip());
 if ($limit !== null) {
     bys_json(429, ['error' => $limit]);
 }

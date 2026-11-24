@@ -37,8 +37,64 @@ function bys_prompt(): array
     return [$system, $version];
 }
 
+/** The closing instruction for a check, from the buyer's details (website). */
+function bys_build_instruction(array $d, array $labels): string
+{
+    $clean = function ($s, $n) {
+        $s = trim(preg_replace('/\s+/', ' ', (string) $s));
+        return function_exists('mb_substr') ? mb_substr($s, 0, $n) : substr($s, 0, $n);
+    };
+    $lines = ["Today's date is " . date('j F Y') . '.', 'The documents attached above, in order, are:'];
+    foreach ($labels as $l) {
+        $lines[] = '- ' . $l;
+    }
+    $community = $clean($d['community'] ?? '', 120);
+    $site = $clean($d['site'] ?? '', 30);
+    $buyer = $clean($d['buyer'] ?? '', 120);
+    $notes = $clean($d['notes'] ?? '', 1000);
+    if ($community !== '') {
+        $lines[] = "Community (as told by the buyer): $community";
+    }
+    if ($site !== '') {
+        $lines[] = "Site number (as told by the buyer): $site";
+    }
+    if ($buyer !== '') {
+        $lines[] = "Buyer name(s): $buyer";
+    }
+    if ($notes !== '') {
+        $lines[] = "Notes from the buyer: $notes";
+    }
+    $lines[] = '';
+    $lines[] = 'Check these documents following your instructions and reply with the JSON object only.';
+    return implode("\n", $lines);
+}
+
+/** Checks a Cloudflare Turnstile token (the website's "not a robot" check). */
+function bys_turnstile_ok(string $token): bool
+{
+    $secret = (string) (bys_config()['turnstile_secret'] ?? '');
+    if ($secret === '') {
+        bys_log('WARNING: website check accepted without Turnstile (turnstile_secret is empty)');
+        return true;
+    }
+    if ($token === '') {
+        return false;
+    }
+    $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query(['secret' => $secret, 'response' => $token, 'remoteip' => bys_client_ip()]),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 15,
+    ]);
+    $out = curl_exec($ch);
+    curl_close($ch);
+    $j = json_decode((string) $out, true);
+    return !empty($j['success']);
+}
+
 /** Counts how many checks a device, and the whole service, have run today. */
-function bys_rate_ok(string $device): ?string
+function bys_rate_ok(string $device, string $ip = ''): ?string
 {
     $cfg = bys_config();
     $file = bys_dir() . '/usage-' . date('Y-m-d') . '.json';
@@ -51,14 +107,22 @@ function bys_rate_ok(string $device): ?string
     $perDevice = (int) ($cfg['max_checks_per_device_per_day'] ?? 3);
     $perDay = (int) ($cfg['max_checks_per_day'] ?? 50);
     $mine = (int) ($u['devices'][$device] ?? 0);
+    $perIp = (int) ($cfg['max_checks_per_ip_per_day'] ?? 3);
+    $ipKey = $ip === '' ? '' : 'ip-' . hash('sha256', $ip);
+    $fromIp = $ipKey === '' ? 0 : (int) ($u['devices'][$ipKey] ?? 0);
     $err = null;
     if ($perDay > 0 && $u['total'] >= $perDay) {
         $err = 'The checking service is very busy today. Please try again tomorrow, or call ARPRA on 1300 798 399.';
     } elseif ($perDevice > 0 && $mine >= $perDevice) {
         $err = "This phone has already run $perDevice checks today. Please try again tomorrow, or call ARPRA on 1300 798 399.";
+    } elseif ($ipKey !== '' && $perIp > 0 && $fromIp >= $perIp) {
+        $err = "$perIp checks have already been run from this internet connection today. Please try again tomorrow, or call ARPRA on 1300 798 399.";
     } else {
         $u['total']++;
         $u['devices'][$device] = $mine + 1;
+        if ($ipKey !== '') {
+            $u['devices'][$ipKey] = $fromIp + 1;
+        }
         ftruncate($fh, 0);
         rewind($fh);
         fwrite($fh, json_encode($u));

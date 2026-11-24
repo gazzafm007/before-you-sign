@@ -6,10 +6,19 @@
 define('BYS', 1);
 require __DIR__ . '/lib.php';
 
-bys_require_app_key();
+bys_web_headers();
 $ref = bys_ref($_GET['ref'] ?? '');
 if ($ref === null) {
     bys_json(400, ['error' => 'Bad reference']);
+}
+if (!bys_has_app_key()) {
+    // The website may ask only about its own check.
+    require_once __DIR__ . '/check_lib.php';
+    $device = preg_replace('/[^A-Za-z0-9-]/', '', (string) ($_SERVER['HTTP_X_BYS_DEVICE'] ?? ''));
+    $job = bys_job($ref);
+    if (!bys_is_web_device($device) || $job === null || !hash_equals((string) ($job['device'] ?? ''), $device)) {
+        bys_json(403, ['error' => 'Not allowed.']);
+    }
 }
 
 $pay = bys_payment($ref);
