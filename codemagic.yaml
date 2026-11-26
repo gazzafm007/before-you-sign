@@ -4,7 +4,7 @@
 #  1. Code signing identities → Android keystores: upload ARPRA's upload key
 #     (the .jks) with reference name  arpra_upload
 #  2. Environment variables → group  clear_to_sign :
-#       BYS_SERVER_KEY = the app_key from the server's config.php (mark Secure)
+#       CTS_SERVER_KEY = the app_key from the server's config.php (mark Secure)
 #  3. Integrations → Developer Portal / App Store Connect: the API key you use
 #     for the members app (its name goes in "app_store_connect" below).
 #  4. iOS: code signing is fetched automatically for bundle ID
@@ -32,7 +32,7 @@ workflows:
         script: |
           flutter build appbundle --release \
             --build-number=$((PROJECT_BUILD_NUMBER + 10)) \
-            --dart-define=BYS_SERVER_KEY="$BYS_SERVER_KEY"
+            --dart-define=CTS_SERVER_KEY="$CTS_SERVER_KEY"
     artifacts:
       - build/app/outputs/bundle/release/*.aab
     publishing:
@@ -66,7 +66,7 @@ workflows:
         script: |
           flutter build ipa --release \
             --build-number=$((PROJECT_BUILD_NUMBER + 10)) \
-            --dart-define=BYS_SERVER_KEY="$BYS_SERVER_KEY" \
+            --dart-define=CTS_SERVER_KEY="$CTS_SERVER_KEY" \
             --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa

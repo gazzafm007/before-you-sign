@@ -1,5 +1,5 @@
 // Renders store screenshots of Clear to Sign (not a real test).
-// Run: flutter test tool/screens/screenshots_test.dart --update-goldens
+// Run: flutter test test/screenshots/screenshots_test.dart --update-goldens
 import 'dart:io';
 
 import 'package:before_you_sign/main.dart';

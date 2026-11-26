@@ -7,14 +7,17 @@ import 'package:uuid/uuid.dart';
 /// App settings.
 ///
 /// Store builds: the ARPRA server and its key are built in
-/// (--dart-define=BYS_SERVER_KEY=… from Codemagic), and the payment link and
+/// (--dart-define=CTS_SERVER_KEY=… from Codemagic), and the payment link and
 /// fee come from the server, so nothing can be changed on the phone.
-/// Test builds (--dart-define=BYS_TEST=true) also show ARPRA's test settings.
+/// Test builds (--dart-define=CTS_TEST=true) also show ARPRA's test settings.
 class AppSettings {
-  static const bool testBuild = bool.fromEnvironment('BYS_TEST');
+  static const bool testBuild = bool.fromEnvironment('CTS_TEST');
+
+  /// ARPRA's server. apps.arpra.org.au is ARPRA's own address for it, so the
+  /// server can move host (GoDaddy → Azure) by changing DNS, not the app.
   static const String builtInServer =
-      String.fromEnvironment('BYS_SERVER', defaultValue: 'https://www.arpra.org.au/bys');
-  static const String builtInServerKey = String.fromEnvironment('BYS_SERVER_KEY');
+      String.fromEnvironment('CTS_SERVER', defaultValue: 'https://apps.arpra.org.au/bys');
+  static const String builtInServerKey = String.fromEnvironment('CTS_SERVER_KEY');
 
   static const appName = 'Clear to Sign';
   static const privacyUrl = 'https://www.arpra.org.au/privacy.html';

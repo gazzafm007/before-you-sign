@@ -1,0 +1,48 @@
+# Deploys the Clear to Sign server to Azure App Service whenever the server
+# files change on the release branch (or when run by hand from the Actions tab).
+#
+# One-off set-up (see server/SETUP-AZURE.md):
+#  - GitHub → Settings → Secrets and variables → Actions → New repository secret
+#      AZURE_WEBAPP_PUBLISH_PROFILE = the publish profile downloaded from the web app
+#  - Variables tab → New repository variable
+#      AZURE_WEBAPP_NAME = the web app's name, e.g. arpra-apps
+#
+# The settings file (config.php) and the data folder live outside the web
+# folder on Azure, so a deployment never touches them.
+
+name: Deploy server to Azure
+
+on:
+  push:
+    branches: [checker-v0.2, main]
+    paths: ['server/**', '.github/workflows/deploy-server.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-server
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ vars.AZURE_WEBAPP_NAME != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the PHP files
+        run: for f in server/bys/*.php; do php -l "$f"; done
+
+      - name: Put the package together
+        run: |
+          mkdir -p package
+          cp -r server/bys package/bys
+          rm -f package/bys/config.php
+          cp -r server/_azure package/_azure
+          printf '<!doctype html><title>ARPRA apps</title><p>ARPRA Limited.</p>\n' > package/index.html
+
+      - name: Deploy to Azure
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: package

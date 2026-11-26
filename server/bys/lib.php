@@ -13,7 +13,9 @@ function bys_config(): array
 {
     static $cfg = null;
     if ($cfg === null) {
-        $file = __DIR__ . '/config.php';
+        // On Azure the settings live outside the web folder: the app setting
+        // BYS_CONFIG gives their path (e.g. /home/site/private/config.php).
+        $file = getenv('BYS_CONFIG') ?: __DIR__ . '/config.php';
         if (!is_file($file)) {
             bys_json(500, ['error' => 'Server not set up (config.php missing).']);
         }
