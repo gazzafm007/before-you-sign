@@ -37,7 +37,7 @@ Future<File> buildReportPdf(
   final theme = pw.ThemeData.withFont(base: regular, bold: bold);
   final doc = pw.Document(
     theme: theme,
-    title: 'Before You Sign report ${c.reference}',
+    title: 'Clear to Sign report ${c.reference}',
     author: 'ARPRA Limited',
   );
 
@@ -140,7 +140,7 @@ Future<File> buildReportPdf(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(
-              'Before You Sign · ARPRA',
+              'Clear to Sign by ARPRA',
               style: pw.TextStyle(
                 fontSize: 9,
                 color: _accent,
@@ -505,7 +505,7 @@ Future<File> buildReportPdf(
   var safe = c.displayTitle.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_');
   if (safe.length > 40) safe = safe.substring(0, 40);
   safe = safe.replaceAll(RegExp(r'^_+|_+$'), '');
-  final f = File('${outDir.path}/BeforeYouSign_${safe}_${c.reference}.pdf');
+  final f = File('${outDir.path}/ClearToSign_${safe}_${c.reference}.pdf');
   await f.writeAsBytes(await doc.save());
   return f;
 }

@@ -1,9 +1,26 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
-/// Test-build settings. In the public version the API key will live on
-/// ARPRA's server, not on the phone.
+/// App settings.
+///
+/// Store builds: the ARPRA server and its key are built in
+/// (--dart-define=BYS_SERVER_KEY=… from Codemagic), and the payment link and
+/// fee come from the server, so nothing can be changed on the phone.
+/// Test builds (--dart-define=BYS_TEST=true) also show ARPRA's test settings.
 class AppSettings {
+  static const bool testBuild = bool.fromEnvironment('BYS_TEST');
+  static const String builtInServer =
+      String.fromEnvironment('BYS_SERVER', defaultValue: 'https://www.arpra.org.au/bys');
+  static const String builtInServerKey = String.fromEnvironment('BYS_SERVER_KEY');
+
+  static const appName = 'Clear to Sign';
+  static const privacyUrl = 'https://www.arpra.org.au/privacy.html';
+  static const termsUrl = 'https://www.arpra.org.au/terms.html';
+  static const refundsUrl = 'https://www.arpra.org.au/refunds.html';
+
   static const _kKey = 'anthropic_key';
   static const _kModel = 'model';
   static const _kEmail = 'arpra_email';
@@ -14,6 +31,7 @@ class AppSettings {
   static const _kServerKey = 'server_key';
   static const _kFull = 'full_report';
   static const _kDevice = 'device_id';
+  static const _kConsent = 'ai_consent_v1';
 
   static const defaultModel = 'claude-opus-5-5';
   static const models = {
@@ -38,6 +56,9 @@ class AppSettings {
   /// behaviour (free summary; full report after paying for ARPRA's review).
   bool fullReport = true;
 
+  /// The buyer agreed to their documents going to ARPRA and Anthropic.
+  bool aiConsent = false;
+
   /// Random id for this install, so ARPRA's server can apply daily limits.
   String deviceId = '';
 
@@ -55,10 +76,55 @@ class AppSettings {
     serverUrl = p.getString(_kServer) ?? '';
     serverKey = p.getString(_kServerKey) ?? '';
     fullReport = p.getBool(_kFull) ?? true;
+    aiConsent = p.getBool(_kConsent) ?? false;
+    if (!testBuild) {
+      // Store build: fixed server; the server decides summary or full report.
+      apiKey = '';
+      model = defaultModel;
+      serverUrl = builtInServer;
+      serverKey = builtInServerKey;
+      fullReport = true;
+      paymentLink = '';
+      feeText = '';
+    } else if (serverUrl.isEmpty && builtInServerKey.isNotEmpty) {
+      serverUrl = builtInServer;
+      serverKey = builtInServerKey;
+    }
     deviceId = p.getString(_kDevice) ?? '';
     if (deviceId.isEmpty) {
       deviceId = const Uuid().v4();
       await p.setString(_kDevice, deviceId);
+    }
+  }
+
+  Future<void> setConsent(bool v) async {
+    aiConsent = v;
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(_kConsent, v);
+  }
+
+  Future<void> saveTextScale(double v) async {
+    textScale = v;
+    final p = await SharedPreferences.getInstance();
+    await p.setDouble(_kTextScale, v);
+  }
+
+  /// Store build: fetch the payment link and fee from ARPRA's server.
+  Future<void> loadServerConfig() async {
+    if (testBuild && paymentLink.isNotEmpty) return;
+    if (serverUrl.isEmpty) return;
+    try {
+      final r = await http
+          .get(serverUri('web-config.php'), headers: {'X-BYS-Key': serverKey, 'X-BYS-Device': deviceId})
+          .timeout(const Duration(seconds: 15));
+      if (r.statusCode != 200) return;
+      final j = jsonDecode(r.body) as Map<String, dynamic>;
+      final link = (j['payment_link'] ?? '').toString();
+      if (link.isNotEmpty) paymentLink = link;
+      final fee = (j['fee_text'] ?? '').toString();
+      if (fee.isNotEmpty) feeText = fee;
+    } catch (_) {
+      // Tried again when the buyer opens the review screen.
     }
   }
 

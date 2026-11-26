@@ -86,11 +86,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final s = AppSettings.instance;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Before You Sign'),
+        title: const Text('Clear to Sign'),
         actions: [
           IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings),
+            tooltip: 'Settings and help',
+            icon: const Icon(Icons.help_outline),
             onPressed: () async {
               await Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
               setState(() {});
@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (!s.canCheck)
+            if (AppSettings.testBuild && !s.canCheck)
               Card(
                 color: const Color(0xFFFFF4DE),
                 child: ListTile(
@@ -122,8 +122,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.fact_check_outlined, size: 44, color: kAccent),
-                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.asset('assets/brand/icon.png', width: 64, height: 64),
+                        ),
+                        const SizedBox(width: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Clear to Sign',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: kAccent)),
+                            const Text('by ARPRA', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                     Text('Check your land lease documents before you sign',
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
@@ -191,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   )),
             const SizedBox(height: 24),
             const Text(
-              'Before You Sign is a first check, not legal advice. ARPRA Limited · 1300 798 399',
+              'Clear to Sign is a first check, not legal advice. ARPRA Limited · 1300 798 399',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.black54, fontSize: 14),
             ),

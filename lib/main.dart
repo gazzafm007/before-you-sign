@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'settings.dart';
 
+const kAppVersion = '1.0.0';
 const kAccent = Color(0xFF2326C9);
 const kRed = Color(0xFFB3261E);
 const kAmber = Color(0xFF8A5300);
@@ -17,11 +18,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppSettings.instance.load();
   textScale.value = AppSettings.instance.textScale;
-  runApp(const BeforeYouSignApp());
+  AppSettings.instance.loadServerConfig();
+  runApp(const ClearToSignApp());
 }
 
-class BeforeYouSignApp extends StatelessWidget {
-  const BeforeYouSignApp({super.key});
+class ClearToSignApp extends StatelessWidget {
+  const ClearToSignApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +78,7 @@ class BeforeYouSignApp extends StatelessWidget {
     return ValueListenableBuilder<double>(
       valueListenable: textScale,
       builder: (context, scale, _) => MaterialApp(
-        title: 'Before You Sign',
+        title: 'Clear to Sign',
         debugShowCheckedModeBanner: false,
         theme: theme,
         builder: (context, child) => MediaQuery(

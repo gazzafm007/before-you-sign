@@ -1,12 +1,25 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Release signing. Codemagic supplies CM_KEYSTORE_PATH etc. from the upload
+// key stored in Codemagic; on a PC, put the same details in
+// android/key.properties (never commit that file or the .jks).
+val keyProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingValue(env: String, prop: String): String? =
+    System.getenv(env)?.takeIf { it.isNotBlank() } ?: keyProps.getProperty(prop)
+val uploadStore = signingValue("CM_KEYSTORE_PATH", "storeFile")
+
 android {
     namespace = "com.arpra.before_you_sign"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = maxOf(36, flutter.compileSdkVersion)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -15,12 +28,12 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.arpra.beforeyousign"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // Clear to Sign by ARPRA (store ID; cannot change after publishing).
+        applicationId = "com.arpra.cleartosign"
+        minSdk = maxOf(24, flutter.minSdkVersion)
+        // Google Play: new apps and updates must target Android 16 (API 36)
+        // from 31 August 2026.
+        targetSdk = 36
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
         // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
         // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
@@ -29,12 +42,25 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (uploadStore != null) {
+            create("upload") {
+                storeFile = file(uploadStore)
+                storePassword = signingValue("CM_KEYSTORE_PASSWORD", "storePassword")
+                keyAlias = signingValue("CM_KEY_ALIAS", "keyAlias")
+                keyPassword = signingValue("CM_KEY_PASSWORD", "keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
-            // Code shrinking (R8) breaks Google's ML Kit document scanner: the
+            // Upload key when available; otherwise debug keys (test builds only:
+            // Google Play rejects debug-signed bundles).
+            signingConfig = if (uploadStore != null) signingConfigs.getByName("upload")
+                            else signingConfigs.getByName("debug")
+            // Code shrinking (R8) breaks Google's ML Kit document scanner (used by
+            // cunning_document_scanner on Android): the
             // scanner fails to start with a NullPointerException inside
             // GmsDocumentScanning.getClient. Keep shrinking off until we have
             // keep rules that are proven on a device.

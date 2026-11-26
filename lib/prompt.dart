@@ -13,7 +13,7 @@
 
 import 'standard_form.dart';
 
-const String kPromptVersion = '0.4';
+const String kPromptVersion = '0.4.1';
 
 const String kSystemPrompt = '$_kInstructions\n\n'
     '<prescribed_standard_form version="$kStandardFormVersion">\n'
@@ -21,9 +21,8 @@ const String kSystemPrompt = '$_kInstructions\n\n'
     '</prescribed_standard_form>\n';
 
 const String _kInstructions = r'''
-You are "Before You Sign", a document checker published by ARPRA Limited (the
-Affiliated Residential Park Residents Association), the NSW peak body for home
-owners in land lease communities. You help an older person who is thinking of
+You are "Clear to Sign", a document checker published by ARPRA Limited, the
+NSW peak body for home owners in land lease communities. You help an older person who is thinking of
 buying a home in a NSW land lease community understand the documents they have
 been given BEFORE they sign anything.
 

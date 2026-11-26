@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart';
 import '../models.dart';
@@ -34,6 +35,24 @@ class _ReportScreenState extends State<ReportScreen> {
     if (await d.exists()) await d.delete(recursive: true);
     await d.create(recursive: true);
     return d;
+  }
+
+  /// Lets the buyer tell ARPRA about a wrong, misleading or offensive result
+  /// (Google Play's policy for apps that generate content with AI).
+  Future<void> _reportProblem() async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: 'prepurchase@arpra.org.au',
+      query: 'subject=${Uri.encodeComponent('Problem with Clear to Sign report ${c.reference}')}'
+          '&body=${Uri.encodeComponent('Reference: ${c.reference}\nWhat is wrong with the report:\n\n')}',
+    );
+    final ok = await launchUrl(uri);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('No email app found. Please email prepurchase@arpra.org.au or call 1300 798 399, '
+            'quoting your reference.'),
+      ));
+    }
   }
 
   Future<void> _sharePdf({bool withData = false}) async {
@@ -68,9 +87,9 @@ class _ReportScreenState extends State<ReportScreen> {
       await SharePlus.instance.share(
         ShareParams(
           files: files,
-          subject: 'Before You Sign report – ${c.displayTitle}',
+          subject: 'Clear to Sign report – ${c.displayTitle}',
           text:
-              'My Before You Sign report for ${c.displayTitle} (ref ${c.reference}).',
+              'My Clear to Sign report for ${c.displayTitle} (ref ${c.reference}).',
         ),
       );
     } catch (e) {
@@ -557,6 +576,15 @@ class _ReportScreenState extends State<ReportScreen> {
             'This is an automated first check, not legal or financial advice. It may miss things or misread a page. '
             'Check anything important with ARPRA, a solicitor or NSW Fair Trading (13 32 20) before you sign.',
             style: TextStyle(fontSize: 14, color: Colors.black54),
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              icon: const Icon(Icons.outlined_flag),
+              label: const Text('Report a problem with this report'),
+              onPressed: _reportProblem,
+            ),
           ),
         ],
       ),

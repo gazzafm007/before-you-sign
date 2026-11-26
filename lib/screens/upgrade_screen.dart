@@ -83,10 +83,15 @@ class _UpgradeScreenState extends State<UpgradeScreen> with WidgetsBindingObserv
   void _snack(String m) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
 
   Future<void> _pay() async {
+    if (AppSettings.instance.paymentLink.isEmpty) await AppSettings.instance.loadServerConfig();
     final link = AppSettings.instance.paymentLink;
     if (link.isEmpty) {
-      setState(() => _paid = true);
-      _snack('Test build: no Stripe payment link set in Settings, so payment is skipped.');
+      if (AppSettings.testBuild) {
+        setState(() => _paid = true);
+        _snack('Test build: no Stripe payment link set in Settings, so payment is skipped.');
+      } else {
+        _snack('Payment is not available right now. Please check your internet connection, or call ARPRA on 1300 798 399.');
+      }
       return;
     }
     final uri = Uri.parse(link).replace(queryParameters: {
@@ -249,7 +254,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> with WidgetsBindingObserv
         ..writeln('App check: ${r['overall_rating'] ?? 'not run'} – ${r['overall_reason'] ?? ''}')
         ..writeln()
         ..writeln('Attached: the app report (PDF), each document, and the case data (JSON).')
-        ..writeln('Sent from Before You Sign (test build) on ${DateFormat('d MMM yyyy h:mm a').format(DateTime.now())}.');
+        ..writeln('Sent from Clear to Sign on ${DateFormat('d MMM yyyy h:mm a').format(DateTime.now())}.');
 
       if (_useServer) {
         final emailed = await _upload(attachments, {

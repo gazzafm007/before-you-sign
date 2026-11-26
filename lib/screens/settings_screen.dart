@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart';
 import '../settings.dart';
@@ -34,6 +35,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _save() async {
+    if (!AppSettings.testBuild) {
+      await s.saveTextScale(_scale);
+      textScale.value = _scale;
+      if (mounted) Navigator.pop(context);
+      return;
+    }
     s.apiKey = _key.text.trim();
     s.arpraEmail = _email.text.trim().isEmpty ? 'prepurchase@arpra.org.au' : _email.text.trim();
     s.paymentLink = _link.text.trim();
@@ -54,7 +61,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: const Text('Settings and help')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -67,6 +74,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             label: '${(_scale * 100).round()}%',
             onChanged: (v) => setState(() => _scale = v),
           ),
+          const SizedBox(height: 8),
+          FilledButton(onPressed: _save, child: const Text('Save text size')),
+          const Divider(height: 32),
+          Text('Help and policies', style: Theme.of(context).textTheme.titleMedium),
+          _linkTile(Icons.call_outlined, 'Call ARPRA on 1300 798 399', 'tel:1300798399'),
+          _linkTile(Icons.mail_outline, 'Email prepurchase@arpra.org.au', 'mailto:prepurchase@arpra.org.au'),
+          _linkTile(Icons.privacy_tip_outlined, 'Privacy policy', AppSettings.privacyUrl),
+          _linkTile(Icons.description_outlined, 'Terms and disclaimer', AppSettings.termsUrl),
+          _linkTile(Icons.currency_exchange, 'Refunds and cancellations', AppSettings.refundsUrl),
+          if (s.aiConsent)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.undo),
+              title: const Text('Withdraw my agreement to send documents for checking'),
+              subtitle: const Text('You will be asked again before your next check.'),
+              onTap: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                await s.setConsent(false);
+                if (!mounted) return;
+                setState(() {});
+                messenger.showSnackBar(const SnackBar(content: Text('Done. We will ask again before your next check.')));
+              },
+            ),
+          if (AppSettings.testBuild) ...[
           const Divider(height: 32),
           Text('Test build settings', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 6),
@@ -154,11 +185,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 24),
           FilledButton(onPressed: _save, child: const Text('Save')),
+          ],
           const SizedBox(height: 24),
-          const Text('Before You Sign · test build 0.6 · ARPRA Limited',
-              textAlign: TextAlign.center, style: TextStyle(color: Colors.black54, fontSize: 14)),
+          Text('Clear to Sign by ARPRA · version $kAppVersion${AppSettings.testBuild ? ' (test build)' : ''}\nARPRA Limited · PO Box 4063, Forster NSW 2428',
+              textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54, fontSize: 14)),
         ],
       ),
     );
   }
+
+  Widget _linkTile(IconData icon, String label, String url) => ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(icon),
+        title: Text(label),
+        onTap: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+      );
 }

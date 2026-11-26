@@ -3,13 +3,14 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:intl/intl.dart';
 
 import '../analyzer.dart';
 import '../main.dart';
 import '../models.dart';
 import '../settings.dart';
+import 'consent_screen.dart';
 import 'progress_screen.dart';
 
 class CheckScreen extends StatefulWidget {
@@ -49,26 +50,30 @@ class _CheckScreenState extends State<CheckScreen> {
   Future<void> _scan(CaseDoc d) async {
     setState(() => _busy = d.kind);
     try {
-      final scanner = DocumentScanner(
-        options: DocumentScannerOptions(
-          documentFormats: {DocumentFormat.jpeg},
-          pageLimit: 60,
-          mode: ScannerMode.full,
-          isGalleryImport: true,
-        ),
+      // Android: Google's ML Kit scanner. iPhone: Apple's document camera.
+      final result = await CunningDocumentScanner.scanDocuments(
+        noOfPages: 60,
+        scannerSource: ScannerSource.cameraAndGallery,
       );
-      final result = await scanner.scanDocument();
-      await scanner.close();
+      if (result == null) return; // cancelled
       final dir = await CaseStore.folder(c);
-      for (final p in result.images ?? <String>[]) {
+      for (final p in result.images) {
         final src = p.startsWith('file:') ? Uri.parse(p).toFilePath() : p;
         final dest = '${dir.path}/${d.kind.short}_${_stamp()}.jpg';
         await preparePhoto(src, dest);
         d.files.add(DocFile(dest, false));
       }
       await _persist();
+      CunningDocumentScanner.cleanCache().catchError((_) {});
+      if (result.discardedPages > 0) {
+        _snack('Only the first 60 pages were kept. Scan the rest as another batch.');
+      }
     } catch (e) {
       if (!mounted) return;
+      if (e is CunningDocumentScannerException && e.code == 'permission_denied') {
+        _snack('Clear to Sign needs the camera to scan pages. Allow it in your phone\'s Settings, or use "Add a file".');
+        return;
+      }
       // Show a short reason, not the whole Android stack trace.
       var msg = e is PlatformException ? (e.message ?? e.code) : e.toString();
       msg = msg.split('\n').first;
@@ -162,7 +167,9 @@ class _CheckScreenState extends State<CheckScreen> {
     await _persist();
     if (!mounted) return;
     if (!AppSettings.instance.canCheck) {
-      _snack('Add the ARPRA server (or, for testing, a Claude API key) in Settings first.');
+      _snack(AppSettings.testBuild
+          ? 'Add the ARPRA server (or, for testing, a Claude API key) in Settings first.'
+          : 'Checking is not available in this version of the app. Please update it, or call ARPRA on 1300 798 399.');
       return;
     }
     if (c.doc(DocKind.disclosure).isEmpty ||
@@ -189,6 +196,8 @@ class _CheckScreenState extends State<CheckScreen> {
       );
       if (go != true || !mounted) return;
     }
+    if (!mounted) return;
+    if (!await ensureAiConsent(context)) return;
     if (!mounted) return;
     await Navigator.pushReplacement(
       context,

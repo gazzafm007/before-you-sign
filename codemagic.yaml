@@ -1,0 +1,84 @@
+# Clear to Sign by ARPRA — store builds on Codemagic.
+#
+# One-off set-up in Codemagic (Team settings / this app's settings):
+#  1. Code signing identities → Android keystores: upload ARPRA's upload key
+#     (the .jks) with reference name  arpra_upload
+#  2. Environment variables → group  clear_to_sign :
+#       BYS_SERVER_KEY = the app_key from the server's config.php (mark Secure)
+#  3. Integrations → Developer Portal / App Store Connect: the API key you use
+#     for the members app (its name goes in "app_store_connect" below).
+#  4. iOS: code signing is fetched automatically for bundle ID
+#     com.arpra.cleartosign (create the app in App Store Connect first).
+#
+# Then start "Android – Play Store" or "iPhone – App Store" from Codemagic.
+
+workflows:
+  android-release:
+    name: Android – Play Store
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+      android_signing:
+        - arpra_upload
+      groups:
+        - clear_to_sign
+    scripts:
+      - name: Get packages
+        script: flutter pub get
+      - name: Check the code
+        script: flutter analyze
+      - name: Build app bundle
+        script: |
+          flutter build appbundle --release \
+            --build-number=$((PROJECT_BUILD_NUMBER + 10)) \
+            --dart-define=BYS_SERVER_KEY="$BYS_SERVER_KEY"
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+    publishing:
+      email:
+        recipients:
+          - gary.martin@arpra.org.au
+        notify:
+          success: true
+          failure: true
+
+  ios-release:
+    name: iPhone – App Store
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: ARPRA App Store Connect   # name of your existing API key in Codemagic
+    environment:
+      flutter: stable
+      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.arpra.cleartosign
+      groups:
+        - clear_to_sign
+    scripts:
+      - name: Get packages
+        script: flutter pub get
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Build iPhone app
+        script: |
+          flutter build ipa --release \
+            --build-number=$((PROJECT_BUILD_NUMBER + 10)) \
+            --dart-define=BYS_SERVER_KEY="$BYS_SERVER_KEY" \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        # Uploads to TestFlight; submit for review yourself in App Store Connect.
+        submit_to_testflight: true
+      email:
+        recipients:
+          - gary.martin@arpra.org.au
+        notify:
+          success: true
+          failure: true
