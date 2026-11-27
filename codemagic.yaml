@@ -2,7 +2,7 @@
 #
 # One-off set-up in Codemagic (Team settings / this app's settings):
 #  1. Code signing identities → Android keystores: upload ARPRA's upload key
-#     (the .jks) with reference name  arpra_upload
+#     (the .jks) with reference name  arpra_upload_key (already there from the members app)
 #  2. Environment variables → group  clear_to_sign :
 #       CTS_SERVER_KEY = the app_key from the server's config.php (mark Secure)
 #  3. Integrations → Developer Portal / App Store Connect: the API key you use
@@ -16,11 +16,11 @@ workflows:
   android-release:
     name: Android – Play Store
     max_build_duration: 60
-    instance_type: linux_x2
+    instance_type: mac_mini_m2
     environment:
       flutter: stable
       android_signing:
-        - arpra_upload
+        - arpra_upload_key
       groups:
         - clear_to_sign
     scripts:
