@@ -16,4 +16,7 @@ if ! grep -q "clear-to-sign" "$CONF"; then
     location ^~ \/bys\/prompt\/ { deny all; }\
     location ~* ^\/bys\/(config.*\\.php|lib\\.php|check_lib\\.php|retry\\.php|.*\\.md|\\.user\\.ini|\\.htaccess)$ { deny all; }/' "$CONF"
 fi
+# Let the server's own JSON error replies (404 "not found yet", 429 limits,
+# 500 set-up errors) reach the app instead of NGINX's error pages.
+sed -i 's/fastcgi_intercept_errors on;/fastcgi_intercept_errors off;/' "$CONF"
 service nginx reload
