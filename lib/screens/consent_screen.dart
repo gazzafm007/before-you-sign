@@ -54,17 +54,11 @@ class _ConsentScreenState extends State<ConsentScreen> {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             _point(Icons.cloud_upload_outlined,
-                'The pages you scan or add are sent securely to ARPRA\'s server.'),
-            _point(Icons.smart_toy_outlined,
-                'ARPRA\'s server sends them to Anthropic, an artificial intelligence (AI) company in the United States, '
-                'whose AI model "Claude" reads them and prepares your report. Anthropic does not use them to train its AI.'),
-            _point(Icons.person_outline,
-                'Your documents may include names, addresses and other personal details, such as yours or the operator\'s.'),
-            _point(Icons.delete_outline,
-                'Documents from a free check are deleted from ARPRA\'s server after 7 days. The report is kept for 90 days '
-                'in case you ask ARPRA to review it.'),
-            _point(Icons.info_outline,
-                'The report is a first check, not legal advice. It can miss things or misread a page.'),
+                'Your pages are sent securely to ARPRA\'s server and to Anthropic, an AI company in the United States, '
+                'whose AI reads them to prepare your report. Anthropic does not use them to train its AI.'),
+            _point(Icons.support_agent_outlined,
+                'Want a person to check it? If you ask for ARPRA\'s Prepurchase Advisory review, an ARPRA adviser '
+                'reads your documents and the report, and gives you written advice.'),
             const SizedBox(height: 4),
             Wrap(
               spacing: 8,
@@ -86,7 +80,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
                 onChanged: (v) => setState(() => _agree = v ?? false),
                 controlAffinity: ListTileControlAffinity.leading,
                 title: const Text(
-                  'I agree to my documents being sent to ARPRA and to Anthropic\'s AI to prepare my report.',
+                  'I agree to my documents being sent to ARPRA and Anthropic\'s AI to prepare my report.',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
