@@ -12,6 +12,7 @@ if ! grep -q "clear-to-sign" "$CONF"; then
     client_max_body_size 64M;\
     fastcgi_read_timeout 900;\
     location ^~ \/_azure\/ { deny all; }\
+    location ^~ \/App_Data\/ { deny all; }\
     location ^~ \/bys\/prompt\/ { deny all; }\
     location ~* ^\/bys\/(config.*\\.php|lib\\.php|check_lib\\.php|retry\\.php|.*\\.md|\\.user\\.ini|\\.htaccess)$ { deny all; }/' "$CONF"
 fi
