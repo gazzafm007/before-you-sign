@@ -41,6 +41,7 @@ unzip -q src.zip; SRC=$(ls -d before-you-sign-*/server)
 mkdir -p pkg/App_Data/jobs/triggered/cts-retry
 cp -r "$SRC/bys" pkg/bys; rm -f pkg/bys/config.php
 cp -r "$SRC/_azure" pkg/_azure
+[ -d "$SRC/site" ] && cp -r "$SRC/site/." pkg/
 cp "$SRC/_azure/webjob/run.sh" pkg/App_Data/jobs/triggered/cts-retry/run.sh
 printf '{ "schedule": "0 */15 * * * *", "is_singleton": true }\n' > pkg/App_Data/jobs/triggered/cts-retry/settings.job
 printf '<!doctype html><title>ARPRA apps</title><p>ARPRA Limited.</p>\n' > pkg/index.html
@@ -54,7 +55,7 @@ echo "$HOST" > ~/cts-host.txt
 say "6/6 Checks (the app can take a minute to start)"
 sleep 30
 for p in bys/web-config.php bys/config.php bys/prompt/system.txt; do
-  printf '%-28s %s\n' "$p" "$(curl -s -o /dev/null -w '%{http_code}' https://$HOST/$p)"
+  printf '%-28s %s\n' "$p" "$(curl -s -m 30 -o /dev/null -w '%{http_code}' https://$HOST/$p)"
 done
 echo
 echo "Web app: $APP   Address: https://$HOST"

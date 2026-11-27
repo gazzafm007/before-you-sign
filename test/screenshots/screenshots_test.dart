@@ -34,6 +34,8 @@ void main() {
   final shots = {
     'phone': const Size(1080, 2340), // Google Play phone
     'iphone69': const Size(1320, 2868), // App Store 6.9-inch
+    'ipad13': const Size(2064, 2752), // App Store 13-inch iPad
+    'iphone63': const Size(1206, 2622), // App Store iPhone with Dynamic Island (medium)
   };
   const dpr = 3.0;
 
