@@ -9,14 +9,15 @@ APP=${APP:-arpra-apps}
 say(){ echo; echo "=== $*"; }
 
 say "1/6 Resource group and plan"
+az account set --subscription "$(az account list --query "[?state=='Enabled']|[0].id" -o tsv)"
 az group create -n $RG -l $LOC -o none
 az appservice plan show -g $RG -n $PLAN -o none 2>/dev/null || \
   az appservice plan create -g $RG -n $PLAN -l $LOC --is-linux --sku B1 -o none
 
 say "2/6 Web app"
 if ! az webapp show -g $RG -n $APP -o none 2>/dev/null; then
-  RT=$(az webapp list-runtimes --os linux -o tsv 2>/dev/null | grep -E '^PHP[:|]8\.4' | head -1)
-  [ -n "$RT" ] || RT=$(az webapp list-runtimes --os linux -o tsv | grep -E '^PHP[:|]8' | sort -V | tail -1)
+  RT="PHP:8.4"
+  az webapp list-runtimes --os linux -o tsv 2>/dev/null | grep -q '8.4' || RT="PHP:8.3"
   az webapp create -g $RG -p $PLAN -n $APP --runtime "$RT" -o none || {
     APP=arpra-apps-$RANDOM; echo "Name taken, using $APP"
     az webapp create -g $RG -p $PLAN -n $APP --runtime "$RT" -o none; }
