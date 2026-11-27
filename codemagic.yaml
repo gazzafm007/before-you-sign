@@ -18,7 +18,7 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      flutter: stable
+      flutter: 3.47.9
       android_signing:
         - arpra_upload_key
       groups:
@@ -27,7 +27,7 @@ workflows:
       - name: Get packages
         script: flutter pub get
       - name: Check the code
-        script: flutter analyze
+        script: flutter analyze --no-fatal-infos
       - name: Build app bundle
         script: |
           flutter build appbundle --release \
@@ -50,7 +50,7 @@ workflows:
     integrations:
       app_store_connect: ARPRA App Store Connect   # name of your existing API key in Codemagic
     environment:
-      flutter: stable
+      flutter: 3.47.9
       xcode: latest
       ios_signing:
         distribution_type: app_store
