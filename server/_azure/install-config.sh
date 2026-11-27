@@ -10,7 +10,7 @@ RG=arpra-apps; APP=$(cat ~/cts-app-name.txt); HOST=$(cat ~/cts-host.txt)
 [ -f ~/config.php ] || { echo "Upload config.php to Cloud Shell first (Manage files > Upload)."; exit 1; }
 cp ~/config.php ~/config.azure.php
 if [ ! -s ~/cts-app-key.txt ]; then
-  tr -dc 'A-Za-z0-9' </dev/urandom | head -c 40 > ~/cts-app-key.txt
+  (set +o pipefail; LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 40 > ~/cts-app-key.txt) || true
 fi
 KEY=$(cat ~/cts-app-key.txt)
 sed -i -E "s#'app_key'[[:space:]]*=>[[:space:]]*'[^']*'#'app_key' => '${KEY}'#" ~/config.azure.php
